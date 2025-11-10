@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}Listado de Calificaciones{% endblock %}
+
+{% block contenido %}
+<h1 class="mb-4 text-primary text-center">Listado de Calificaciones Tributarias</h1>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover align-middle shadow-sm">
+        <thead class="table-primary">
+        <tr>
+            <th>Contribuyente</th>
+            <th>Estado</th>
+            <th>Puntaje</th>
+            <th>Fecha</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for c in calificaciones %}
+            <tr>
+            <td>{{ c.contribuyente.razon_social }}</td>
+            <td><span class="badge bg-info text-dark">{{ c.estado.nombre }}</span></td>
+            <td>{{ c.puntaje_total }}</td>
+            <td>{{ c.fecha|date:"d/m/Y" }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+            <td colspan="4" class="text-center text-muted py-3">No hay calificaciones registradas.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
