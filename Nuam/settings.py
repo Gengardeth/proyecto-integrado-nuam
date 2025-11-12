@@ -79,8 +79,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'proyecto_nuam',
-        'USER': 'nuam_user',
-        'PASSWORD': '1234',
+        'USER': 'postgres',
+        'PASSWORD': 'Nuam290adminexchange@',
         'HOST': 'localhost',
         'PORT': '5432',
     }
