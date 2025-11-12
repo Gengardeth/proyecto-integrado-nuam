@@ -19,3 +19,56 @@ class Parametro(models.Model):
 
     def __str__(self):
         return f"{self.tipo.nombre} - {self.nombre}"
+
+
+class Issuer(models.Model):
+    """
+    Modelo para Emisor de instrumentos financieros.
+    Ej: Banco, Empresa, etc.
+    """
+    codigo = models.CharField(max_length=50, unique=True)
+    nombre = models.CharField(max_length=200)
+    razon_social = models.CharField(max_length=250, blank=True)
+    rut = models.CharField(max_length=20, unique=True)
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['nombre']
+        verbose_name = 'Emisor'
+        verbose_name_plural = 'Emisores'
+
+    def __str__(self):
+        return f"{self.codigo} - {self.nombre}"
+
+
+class Instrument(models.Model):
+    """
+    Modelo para Instrumento financiero.
+    Ej: Bono, Acción, etc.
+    """
+    TIPO_CHOICES = [
+        ('BONO', 'Bono'),
+        ('ACCION', 'Acción'),
+        ('PAGARE', 'Pagaré'),
+        ('LETRA', 'Letra'),
+        ('OTRO', 'Otro'),
+    ]
+    
+    codigo = models.CharField(max_length=50, unique=True)
+    nombre = models.CharField(max_length=200)
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='OTRO')
+    descripcion = models.TextField(blank=True)
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['nombre']
+        verbose_name = 'Instrumento'
+        verbose_name_plural = 'Instrumentos'
+
+    def __str__(self):
+        return f"{self.codigo} - {self.nombre} ({self.get_tipo_display()})"
+
