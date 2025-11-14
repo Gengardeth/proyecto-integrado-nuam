@@ -1,4 +1,5 @@
-# NUAM - Estado del Proyecto
+# 📈 NUAM - Estado del Proyecto
+## Reporte Ejecutivo de Progreso
 
 **Última actualización:** 12 de noviembre de 2025  
 **Status:** 🟢 Sprint 1 Completado - Listo para Sprint 2

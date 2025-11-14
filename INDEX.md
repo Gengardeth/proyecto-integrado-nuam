@@ -1,4 +1,5 @@
-# 📑 Índice de Documentación - Proyecto NUAM
+# 📑 Índice y Navegador de Documentación
+## Centro de Información del Proyecto NUAM
 
 **Estado:** 🟢 Sprint 1 Completado | Backend API Funcional  
 **Última actualización:** 12 de noviembre de 2025

@@ -1,4 +1,5 @@
-# ROADMAP - NUAM Desarrollo (Sprint 2, 3, 4)
+# 🗺️ ROADMAP - Plan de Desarrollo (Sprints 2, 3, 4)
+## Cronograma Detallado de Implementación Futuras
 
 ## Sprint 2: Carga Masiva + Reportes (2 semanas)
 

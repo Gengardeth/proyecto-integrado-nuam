@@ -1,4 +1,5 @@
-# 🎯 NUAM Sprint 1 - Entregables
+# � NUAM Sprint 1 - Entregables Finales
+## Resumen Completo de lo Entregado
 
 ## Resumen de Entrega
 

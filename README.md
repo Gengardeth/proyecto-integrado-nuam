@@ -1,8 +1,10 @@
-# NUAM – Mantenedor de Calificaciones Tributarias
+# 📊 NUAM – Mantenedor de Calificaciones Tributarias
+## Sistema Seguro de Gestión de Calificaciones Fiscales
 
 Sistema web seguro y trazable para gestionar calificaciones tributarias, con carga masiva, reportes, auditoría y control de acceso por roles, alineado a normativa chilena básica de protección de datos.
 
 > **Estado:** 🟢 **Sprint 1 Completado** | Backend API REST completamente funcional  
+> **Última Actualización:** 12 de noviembre de 2025  
 > **Documentación:** Ver [PROJECT_STATUS.md](PROJECT_STATUS.md) para resumen ejecutivo  
 > **Próximo:** Sprint 2 (Carga masiva + Reportes)
 

@@ -1,6 +1,7 @@
-# 🚀 HOLA CABROS - GUÍA COMPLETA PARA LOS PRÓXIMOS SPRINTS
+# 🚀 HOLA CABROS - Guía Completa para Sprints 2-4
+## Contexto Exhaustivo para IAs y Desarrolladores
 
-> **Archivo de Contexto Completo para IA/Desarrolladores**  
+> **Archivo de Contexto Completo**  
 > Este documento contiene TODO lo que necesitan saber para continuar con los Sprints 2-4
 
 ---

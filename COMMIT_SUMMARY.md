@@ -1,4 +1,5 @@
-# COMMIT SUMMARY - Sprint 1 Completado
+# 📝 Resumen de Commits - Sprint 1 Completado
+## Detalle Técnico de Cambios Realizados
 
 **Autor:** GitHub Copilot + NUAM Team  
 **Fecha:** 12 de noviembre de 2025  

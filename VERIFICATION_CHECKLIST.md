@@ -1,4 +1,5 @@
-# Verificación del Setup - Checklist
+# ✅ Checklist de Verificación del Sistema
+## Procedimientos Manuales de Testing y Validación
 
 Use este checklist para verificar que el backend está completamente funcional.
 

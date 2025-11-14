@@ -1,4 +1,5 @@
-# Guía de Setup para Desarrolladores
+# 👨‍💻 Guía de Setup para Desarrolladores
+## Paso a Paso para Configurar el Entorno Local
 
 ## 1. Requisitos Previos
 
