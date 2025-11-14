@@ -1,0 +1,14 @@
+html, body, #root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: #f5f7fa;
+}
+
+/* small helper to ensure containers expand */
+.container-fluid, .container {
+  width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
