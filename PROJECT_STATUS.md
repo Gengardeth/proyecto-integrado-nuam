@@ -58,6 +58,13 @@ Se ha desarrollado exitosamente el **backend API Django/DRF** con arquitectura s
 - Admin de Django con todos los modelos registrados
 - Middleware para capturar contexto (IP/User-Agent)
 
+### Notas recientes y operaciones recomendadas
+
+- Las credenciales de la base de datos ahora se cargan desde `.env` usando `python-dotenv` (no incluya contraseñas en `settings.py`).
+- Para crear usuarios demo use: `python manage.py seed_users`.
+- Para crear el superusuario en entornos automatizados (CI o Docker) use variables de entorno `DJANGO_SUPERUSER_*` y secretos en GitHub Actions.
+- Si tu contraseña fue expuesta en el historial de Git, rota la credencial y actualiza `.env` en todos los entornos.
+
 #### ✅ Documentación
 - README.md: guía completa de instalación y uso
 - SPRINT1_SUMMARY.md: resumen técnico del Sprint 1

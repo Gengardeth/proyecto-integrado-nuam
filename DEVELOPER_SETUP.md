@@ -233,9 +233,33 @@ git push origin feature/nombre-feature
 Para problemas:
 1. Revisa el README.md
 2. Consulta los comentarios en el código
-3. Revisa los logs de Django (console)
-4. Pregunta al equipo en el repositorio
+### 9. Crear Superusuario (opcional, para acceso a admin)
 
----
+Se recomienda usar variables de entorno para crear superusuario en CI o cuando se habilite el entorno de staging.
 
+```bash
+# Crear superuser interactivo
+python manage.py createsuperuser
+
+# Crear superuser no interactivo (útil en CI / Docker)
+export DJANGO_SUPERUSER_USERNAME=admin
+export DJANGO_SUPERUSER_EMAIL=admin@example.com
+export DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+python manage.py createsuperuser --noinput || true
+```
+
+Si usas PowerShell en Windows:
+
+```powershell
+$env:DJANGO_SUPERUSER_USERNAME='admin'
+$env:DJANGO_SUPERUSER_EMAIL='admin@example.com'
+$env:DJANGO_SUPERUSER_PASSWORD='=YourSecretFromCISecrets='
+python manage.py createsuperuser --noinput
+```
+
+También está disponible el comando `seed_users` para crear usuarios demo:
+
+```bash
+python manage.py seed_users
+```
 ¡Listo para desarrollar! 🚀

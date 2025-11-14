@@ -33,6 +33,12 @@
 - ✅ 3 usuarios demo (admin, analista, auditor)
 - ✅ 10 documentos de documentación
 
+## Cambios recientes importantes
+
+- La configuración de la base de datos fue movida a variables de entorno en `Nuam/settings.py` y utiliza `python-dotenv` para cargar `.env` en local. No dejes contraseñas en `settings.py`.
+- Añadido el comando `python manage.py seed_users` para crear usuarios demo (admin/analista/auditor). Para CI o despliegues automatizados, crea el superusuario no interactivamente con variables de entorno `DJANGO_SUPERUSER_*` y secretos del CI.
+- Se añadió `HOLA_CABROS.md` con un plan completo de Sprints 2-4 y pasos detallados; úsalo como contexto principal para IAs o nuevos desarrolladores.
+
 **Problemas Conocidos:**
 - ❌ PostgreSQL requiere configuración (credentials en settings.py)
 - ❌ Puedes usar SQLite en desarrollo si no tienes Postgres disponible

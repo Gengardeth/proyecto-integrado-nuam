@@ -202,7 +202,7 @@ DEBUG=True
 DB_ENGINE=django.db.backends.postgresql
 DB_NAME=proyecto_nuam
 DB_USER=postgres
-DB_PASSWORD=Nuam290adminexchange@
+DB_PASSWORD=your-password-here  # Cambia esto por tu contraseña local segura
 DB_HOST=localhost
 DB_PORT=5432
 
@@ -233,10 +233,51 @@ Usuarios creados:
 ### 7. Crear superusuario (opcional, para acceso a admin)
 
 ```bash
+# Opción 1 (interactivo):
 python manage.py createsuperuser
+
+# Opción 2 (no interactivo, útil en CI / Docker):
+export DJANGO_SUPERUSER_USERNAME=admin
+export DJANGO_SUPERUSER_EMAIL=admin@example.com
+export DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+python manage.py createsuperuser --noinput || true
+
+# En PowerShell (Windows)
+$env:DJANGO_SUPERUSER_USERNAME='admin'
+$env:DJANGO_SUPERUSER_EMAIL='admin@example.com'
+$env:DJANGO_SUPERUSER_PASSWORD=$env:DJANGO_SUPERUSER_PASSWORD
+python manage.py createsuperuser --noinput
 ```
 
 ### 8. Instalar dependencias del frontend (opcional, si usarás React local)
+## Comprobaciones rápidas
+
+1. Arrancar servidor local (sin IP explícita):
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\python.exe manage.py runserver
+```
+
+2. Probar health endpoint:
+
+```powershell
+Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/health
+```
+
+3. Acceder a panel admin (crear superuser si es necesario):
+
+```powershell
+.\.venv\Scripts\python.exe manage.py createsuperuser
+```
+
+4. Probar endpoint de emisores:
+
+```powershell
+curl -sS http://127.0.0.1:8000/api/v1/issuers/
+```
+
+> Nota: Si tu proyecto está configurado para PostgreSQL, asegúrate de que las credenciales en `.env` sean correctas y el servicio Postgres esté corriendo. Si la contraseña fue expuesta por error en el repo, rotarla inmediatamente.
 
 ```bash
 cd frontend
