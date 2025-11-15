@@ -1,0 +1,142 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2C2C2C 0%, #1A1A1A 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decoraciones geométricas */
+.login-decoration-left {
+  position: absolute;
+  left: -100px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 400px;
+  height: 400px;
+  background: #FF5722;
+  border-radius: 50%;
+  opacity: 0.8;
+  z-index: 0;
+}
+
+.login-decoration-right {
+  position: absolute;
+  right: -50px;
+  top: -50px;
+  width: 200px;
+  height: 500px;
+  background: repeating-linear-gradient(
+    45deg,
+    #FF5722,
+    #FF5722 20px,
+    #2C2C2C 20px,
+    #2C2C2C 40px
+  );
+  opacity: 0.9;
+  z-index: 0;
+}
+
+/* Caja de login */
+.login-box {
+  background: #2C2C2C;
+  border: 2px solid #444;
+  border-radius: 8px;
+  padding: 60px 50px;
+  width: 450px;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+  z-index: 1;
+  position: relative;
+}
+
+/* Logo */
+.login-logo {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.login-logo svg {
+  width: 200px;
+  height: 60px;
+}
+
+/* Formulario */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-bottom: 2px solid #555;
+  background: transparent;
+  color: #E0E0E0;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.form-group input::placeholder {
+  color: #888;
+}
+
+.form-group input:focus {
+  border-bottom-color: #FF5722;
+}
+
+/* Botón de ingresar */
+.login-button {
+  width: 100%;
+  padding: 15px;
+  background: #FF5722;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.1s;
+  margin-top: 10px;
+}
+
+.login-button:hover {
+  background: #E64A19;
+}
+
+.login-button:active {
+  transform: scale(0.98);
+}
+
+.login-button:disabled {
+  background: #777;
+  cursor: not-allowed;
+}
+
+/* Error */
+.login-error {
+  background: #D32F2F;
+  color: white;
+  padding: 12px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .login-box {
+    width: 90%;
+    padding: 40px 30px;
+  }
+  
+  .login-decoration-left,
+  .login-decoration-right {
+    opacity: 0.5;
+  }
+}

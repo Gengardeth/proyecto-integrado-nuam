@@ -67,3 +67,81 @@ class TaxRating(models.Model):
     def __str__(self):
         return f"{self.issuer.nombre} - {self.instrument.nombre} ({self.rating}) - {self.fecha_rating}"
 
+
+class BulkUpload(models.Model):
+    """
+    Modelo para gestionar cargas masivas de datos desde archivos CSV/XLSX.
+    Registra el estado del proceso y resultados.
+    """
+    ESTADO_CHOICES = [
+        ('PENDIENTE', 'Pendiente'),
+        ('PROCESANDO', 'Procesando'),
+        ('COMPLETADO', 'Completado'),
+        ('ERROR', 'Error'),
+    ]
+    
+    TIPO_CHOICES = [
+        ('CSV', 'CSV'),
+        ('XLSX', 'XLSX'),
+    ]
+    
+    archivo = models.FileField(upload_to='bulk_uploads/%Y/%m/%d/')
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='bulk_uploads')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
+    total_filas = models.IntegerField(default=0)
+    filas_ok = models.IntegerField(default=0)
+    filas_error = models.IntegerField(default=0)
+    resumen_errores = models.JSONField(default=dict, blank=True)
+    fecha_inicio = models.DateTimeField(null=True, blank=True)
+    fecha_fin = models.DateTimeField(null=True, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-creado_en']
+        verbose_name = 'Carga Masiva'
+        verbose_name_plural = 'Cargas Masivas'
+        indexes = [
+            models.Index(fields=['usuario', 'estado']),
+            models.Index(fields=['creado_en']),
+        ]
+    
+    def __str__(self):
+        return f"Carga {self.id} - {self.estado} ({self.usuario.username if self.usuario else 'N/A'})"
+    
+    @property
+    def porcentaje_exito(self):
+        if self.total_filas == 0:
+            return 0
+        return round((self.filas_ok / self.total_filas) * 100, 2)
+
+
+class BulkUploadItem(models.Model):
+    """
+    Modelo para registrar cada fila procesada en una carga masiva.
+    Permite trazabilidad y debugging.
+    """
+    ESTADO_CHOICES = [
+        ('OK', 'OK'),
+        ('ERROR', 'Error'),
+    ]
+    
+    bulk_upload = models.ForeignKey(BulkUpload, on_delete=models.CASCADE, related_name='items')
+    numero_fila = models.IntegerField()
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES)
+    mensaje_error = models.CharField(max_length=500, blank=True)
+    datos = models.JSONField(default=dict)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['numero_fila']
+        verbose_name = 'Item de Carga Masiva'
+        verbose_name_plural = 'Items de Carga Masiva'
+        indexes = [
+            models.Index(fields=['bulk_upload', 'estado']),
+        ]
+    
+    def __str__(self):
+        return f"Fila {self.numero_fila} - {self.estado}"
+

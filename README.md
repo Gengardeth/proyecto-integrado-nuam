@@ -3,10 +3,10 @@
 
 Sistema web seguro y trazable para gestionar calificaciones tributarias, con carga masiva, reportes, auditoría y control de acceso por roles, alineado a normativa chilena básica de protección de datos.
 
-> **Estado:** 🟢 **Sprint 1 Completado** | Backend API REST completamente funcional  
-> **Última Actualización:** 12 de noviembre de 2025  
+> **Estado:** 🟢 **Sprint 2 Completado** | Backend API REST con carga masiva y reportes  
+> **Última Actualización:** 14 de noviembre de 2025  
 > **Documentación:** Ver [PROJECT_STATUS.md](PROJECT_STATUS.md) para resumen ejecutivo  
-> **Próximo:** Sprint 2 (Carga masiva + Reportes)
+> **Próximo:** Sprint 3 (Frontend React)
 
 ---
 
@@ -99,9 +99,9 @@ proyecto-integrado-nuam/
 
 ---
 
-## Estado de Desarrollo (Sprint 1)
+## Estado de Desarrollo
 
-### ✅ Completado
+### ✅ Sprint 1 - Completado
 
 - [x] Modelo de Usuario personalizado con roles RBAC (Administrador, Analista, Auditor)
 - [x] Endpoints de autenticación (login, logout, me, roles)
@@ -124,20 +124,44 @@ proyecto-integrado-nuam/
   - [x] ViewSet de consulta con filtros y resumen
   - [x] Registro en admin (solo lectura)
 
+### ✅ Sprint 2 - Completado
+
+- [x] **Carga Masiva de Datos:**
+  - [x] Modelo BulkUpload (gestión de archivos CSV/XLSX)
+  - [x] Modelo BulkUploadItem (seguimiento por fila)
+  - [x] Parsers CSV/XLSX con validaciones
+  - [x] ViewSet para subir y gestionar cargas
+  - [x] Endpoint para procesar cargas síncronas
+  - [x] Comando management: `python manage.py process_uploads`
+  - [x] Registro en admin (BulkUpload y BulkUploadItem)
+  
+- [x] **Reportes y Exportaciones:**
+  - [x] Endpoint de estadísticas generales
+  - [x] Exportación a CSV
+  - [x] Exportación a PDF con reportlab
+  - [x] Filtros por fecha, issuer, instrument
+  - [x] Top 10 de issuers e instruments
+  - [x] Resumen por rating y outlook
+
+- [x] **Dependencias instaladas:**
+  - [x] openpyxl (soporte XLSX)
+  - [x] reportlab (generación PDF)
+  - [x] pillow (imágenes en PDF)
+
 ### 🔄 En Desarrollo
 
-- [ ] Carga masiva (CSV/XLSX)
-- [ ] Reportes y exportaciones (CSV/PDF)
-- [ ] Tests unitarios e integración
 - [ ] Frontend React + Vite
 - [ ] Autenticación y login frontend
 - [ ] Formularios y listados CRUD
+- [ ] Interfaz para carga masiva
+- [ ] Visualización de reportes
+
+### 📋 Próximamente (Sprint 3 y 4)
+
+- [ ] Tests unitarios e integración completos
 - [ ] Protección de endpoints por roles
-
-### 📋 Próximamente
-
 - [ ] Endurecimiento de seguridad (rate limiting, headers)
-- [ ] Celery + Redis para cargas asíncronas
+- [ ] Celery + Redis para cargas asíncronas (opcional)
 - [ ] E2E tests con Selenium
 - [ ] Tests de rendimiento con Locust
 - [ ] Docker Compose completo

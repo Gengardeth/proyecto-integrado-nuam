@@ -1,21 +1,23 @@
 # 📈 NUAM - Estado del Proyecto
 ## Reporte Ejecutivo de Progreso
 
-**Última actualización:** 12 de noviembre de 2025  
-**Status:** 🟢 Sprint 1 Completado - Listo para Sprint 2
+**Última actualización:** 14 de noviembre de 2025  
+**Status:** 🟢 Sprint 2 Completado - Listo para Sprint 3
 
 ---
 
 ## 📊 Resumen Ejecutivo
 
 ### Sprint 1: Completado ✅
+Backend API Django/DRF con arquitectura segura, escalable y auditada.
 
-Se ha desarrollado exitosamente el **backend API Django/DRF** con arquitectura segura, escalable y auditada para el sistema NUAM de gestión de calificaciones tributarias.
+### Sprint 2: Completado ✅
+Carga masiva de datos (CSV/XLSX) y sistema de reportes con exportaciones (CSV/PDF).
 
-**Líneas de Código Implementadas:** ~1,200  
-**Modelos Creados:** 6 (Usuario, Issuer, Instrument, TaxRating, AuditLog, etc.)  
-**Endpoints:** 30+ (CRUD, filtros, acciones personalizadas)  
-**Cobertura de Requisitos:** 85% (Sprint 1)
+**Líneas de Código Implementadas:** ~3,500  
+**Modelos Creados:** 8 (Usuario, Issuer, Instrument, TaxRating, AuditLog, BulkUpload, BulkUploadItem, etc.)  
+**Endpoints:** 45+ (CRUD, cargas masivas, reportes, filtros, acciones personalizadas)  
+**Cobertura de Requisitos:** 70% (Sprints 1 y 2)
 
 ---
 
@@ -50,13 +52,73 @@ Se ha desarrollado exitosamente el **backend API Django/DRF** con arquitectura s
 - Filtros: por usuario, acción, modelo
 - Acción: resumen estadístico
 
-#### ✅ Configuración y Tooling
+#### ✅ Configuración y Tooling (Sprint 1)
 - Django REST Framework + CORS configurados
-- Migraciones completas (4 nuevas)
-- requirements.txt actualizado
+- Migraciones completas (5 aplicadas)
+- requirements.txt actualizado con nuevas dependencias
 - .env.example para variables de entorno
 - Admin de Django con todos los modelos registrados
 - Middleware para capturar contexto (IP/User-Agent)
+
+---
+
+## 🎯 Sprint 2: Completado ✅
+
+### Carga Masiva de Datos
+
+#### ✅ Modelos
+- **BulkUpload**: Gestiona cargas de archivos CSV/XLSX
+  - Campos: archivo, tipo, usuario, estado, totales, resumen de errores
+  - Estados: PENDIENTE, PROCESANDO, COMPLETADO, ERROR
+  - Propiedad calculada: porcentaje_exito
+- **BulkUploadItem**: Seguimiento individual por fila
+  - Campos: bulk_upload, numero_fila, estado, mensaje_error, datos
+  - Estados: OK, ERROR
+
+#### ✅ Backend y Utilidades
+- Parser CSV con validaciones (`utils.py`)
+- Parser XLSX con validaciones (`utils.py`)
+- Validador de filas: `validate_tax_rating_row()`
+- Procesador completo: `process_bulk_upload_file()`
+- Manejo de errores por fila sin detener el proceso
+
+#### ✅ API Endpoints (BulkUploadViewSet)
+- `POST /api/v1/calificacionfiscal/bulk-uploads/` - Subir archivo
+- `GET /api/v1/calificacionfiscal/bulk-uploads/` - Listar cargas
+- `GET /api/v1/calificacionfiscal/bulk-uploads/{id}/` - Detalle de carga
+- `GET /api/v1/calificacionfiscal/bulk-uploads/{id}/items/` - Items por carga
+- `POST /api/v1/calificacionfiscal/bulk-uploads/{id}/procesar/` - Procesar carga
+- `GET /api/v1/calificacionfiscal/bulk-uploads/resumen/` - Resumen del usuario
+
+#### ✅ Comando Management
+- `python manage.py process_uploads --id <id>` - Procesar carga específica
+- `python manage.py process_uploads --all` - Procesar todas pendientes
+
+#### ✅ Admin
+- BulkUploadAdmin: visualización completa, solo lectura
+- BulkUploadItemAdmin: items con filtros, solo lectura
+
+### Reportes y Exportaciones
+
+#### ✅ Módulo de Reportes (`reports.py`)
+- `generar_reporte_csv()`: Exporta TaxRatings a CSV con encoding UTF-8
+- `generar_reporte_pdf()`: Genera PDF con reportlab, incluye estadísticas y tabla
+- `obtener_estadisticas()`: Calcula stats por rating, outlook, top issuers/instruments
+
+#### ✅ API Endpoints (ReportsViewSet)
+- `GET /api/v1/calificacionfiscal/reports/estadisticas/` - Stats generales (JSON)
+  - Filtros: fecha_desde, fecha_hasta, issuer_id, instrument_id
+- `GET /api/v1/calificacionfiscal/reports/exportar_csv/` - Exporta a CSV
+  - Filtros: fecha_desde, fecha_hasta
+- `GET /api/v1/calificacionfiscal/reports/exportar_pdf/` - Exporta a PDF
+  - Filtros: fecha_desde, fecha_hasta, incluir_estadisticas
+
+#### ✅ Dependencias Instaladas
+- openpyxl==3.1.5 (soporte XLSX)
+- reportlab==4.4.4 (generación PDF)
+- pillow==12.0.0 (imágenes en PDF)
+- et-xmlfile==2.0.0 (soporte XML de Excel)
+- charset-normalizer==3.4.4 (encoding)
 
 ### Notas recientes y operaciones recomendadas
 
