@@ -3,10 +3,10 @@
 
 Sistema web seguro y trazable para gestionar calificaciones tributarias, con carga masiva, reportes, auditoría y control de acceso por roles, alineado a normativa chilena básica de protección de datos.
 
-> **Estado:** 🟢 **Sprint 2 Completado** | Backend API REST con carga masiva y reportes  
+> **Estado:** 🟢 **Sprint 3 Completado** | Frontend React completo con todas las funcionalidades  
 > **Última Actualización:** 14 de noviembre de 2025  
 > **Documentación:** Ver [PROJECT_STATUS.md](PROJECT_STATUS.md) para resumen ejecutivo  
-> **Próximo:** Sprint 3 (Frontend React)
+> **Próximo:** Sprint 4 (Tests + DevOps)
 
 ---
 

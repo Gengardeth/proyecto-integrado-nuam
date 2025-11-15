@@ -1,0 +1,256 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { taxRatingsAPI } from '../../services/api';
+import { formatDate } from '../../utils/dateFormat';
+import { RATING_STATUS_LABELS } from '../../utils/constants';
+import '../../styles/Calificaciones.css';
+
+const CalificacionesList = () => {
+  const navigate = useNavigate();
+  const [calificaciones, setCalificaciones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    search: '',
+    estado: '',
+    fecha_desde: '',
+    fecha_hasta: ''
+  });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10,
+    total: 0
+  });
+
+  useEffect(() => {
+    fetchCalificaciones();
+  }, [pagination.page, filters]);
+
+  const fetchCalificaciones = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        page: pagination.page,
+        page_size: pagination.pageSize,
+        ...filters
+      };
+      
+      const response = await taxRatingsAPI.list(params);
+      setCalificaciones(response.data.results || response.data);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.count || response.data.length
+      }));
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching calificaciones:', err);
+      setError('Error al cargar las calificaciones');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar esta calificación?')) return;
+    
+    try {
+      await taxRatingsAPI.delete(id);
+      fetchCalificaciones();
+    } catch (err) {
+      console.error('Error deleting calificacion:', err);
+      alert('Error al eliminar la calificación');
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+  };
+
+  const totalPages = Math.ceil(pagination.total / pagination.pageSize);
+
+  if (loading && calificaciones.length === 0) {
+    return (
+      <div className="calificaciones-container">
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Cargando calificaciones...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="calificaciones-container">
+      <div className="calificaciones-header">
+        <h1>Calificaciones Fiscales</h1>
+        <button 
+          className="btn-primary"
+          onClick={() => navigate('/calificaciones/nueva')}
+        >
+          + Nueva Calificación
+        </button>
+      </div>
+
+      {/* Filtros */}
+      <div className="filters-section">
+        <div className="filter-group">
+          <input
+            type="text"
+            name="search"
+            placeholder="Buscar por issuer o instrumento..."
+            value={filters.search}
+            onChange={handleFilterChange}
+            className="filter-input"
+          />
+        </div>
+        
+        <div className="filter-group">
+          <select
+            name="estado"
+            value={filters.estado}
+            onChange={handleFilterChange}
+            className="filter-select"
+          >
+            <option value="">Todos los estados</option>
+            {Object.entries(RATING_STATUS_LABELS).map(([key, label]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <input
+            type="date"
+            name="fecha_desde"
+            value={filters.fecha_desde}
+            onChange={handleFilterChange}
+            className="filter-input"
+            placeholder="Desde"
+          />
+        </div>
+
+        <div className="filter-group">
+          <input
+            type="date"
+            name="fecha_hasta"
+            value={filters.fecha_hasta}
+            onChange={handleFilterChange}
+            className="filter-input"
+            placeholder="Hasta"
+          />
+        </div>
+
+        <button 
+          className="btn-secondary"
+          onClick={() => {
+            setFilters({ search: '', estado: '', fecha_desde: '', fecha_hasta: '' });
+            setPagination(prev => ({ ...prev, page: 1 }));
+          }}
+        >
+          Limpiar
+        </button>
+      </div>
+
+      {error && <div className="error-message">{error}</div>}
+
+      {/* Tabla */}
+      <div className="table-container">
+        <table className="calificaciones-table">
+          <thead>
+            <tr>
+              <th>Issuer</th>
+              <th>Instrumento</th>
+              <th>Rating</th>
+              <th>Estado</th>
+              <th>Fecha Emisión</th>
+              <th>Vigencia</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {calificaciones.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="empty-state">
+                  No hay calificaciones registradas
+                </td>
+              </tr>
+            ) : (
+              calificaciones.map((calif) => (
+                <tr key={calif.id}>
+                  <td>{calif.issuer_name || calif.issuer}</td>
+                  <td>{calif.instrument_name || calif.instrument}</td>
+                  <td>
+                    <span className="rating-badge">{calif.rating}</span>
+                  </td>
+                  <td>
+                    <span className={`status-badge status-${calif.estado?.toLowerCase()}`}>
+                      {RATING_STATUS_LABELS[calif.estado] || calif.estado}
+                    </span>
+                  </td>
+                  <td>{formatDate(calif.fecha_emision)}</td>
+                  <td>{formatDate(calif.fecha_vigencia)}</td>
+                  <td className="actions-cell">
+                    <button
+                      className="btn-action btn-view"
+                      onClick={() => navigate(`/calificaciones/${calif.id}`)}
+                      title="Ver detalle"
+                    >
+                      👁️
+                    </button>
+                    <button
+                      className="btn-action btn-edit"
+                      onClick={() => navigate(`/calificaciones/${calif.id}/editar`)}
+                      title="Editar"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      className="btn-action btn-delete"
+                      onClick={() => handleDelete(calif.id)}
+                      title="Eliminar"
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button
+            className="pagination-btn"
+            onClick={() => handlePageChange(pagination.page - 1)}
+            disabled={pagination.page === 1}
+          >
+            ← Anterior
+          </button>
+          
+          <span className="pagination-info">
+            Página {pagination.page} de {totalPages}
+          </span>
+          
+          <button
+            className="pagination-btn"
+            onClick={() => handlePageChange(pagination.page + 1)}
+            disabled={pagination.page >= totalPages}
+          >
+            Siguiente →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default CalificacionesList;

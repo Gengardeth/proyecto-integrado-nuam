@@ -8,26 +8,14 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Importante para enviar cookies de sesión
 });
-
-// Interceptor para agregar el token a cada petición
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Token ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // Interceptor para manejar errores de autenticación
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
@@ -37,10 +25,10 @@ api.interceptors.response.use(
 
 // ==================== AUTH ====================
 export const authAPI = {
-  login: (credentials) => api.post('/cuentas/login/', credentials),
-  logout: () => api.post('/cuentas/logout/'),
-  me: () => api.get('/cuentas/me/'),
-  getRoles: () => api.get('/cuentas/roles/'),
+  login: (credentials) => api.post('/auth/login', credentials),
+  logout: () => api.post('/auth/logout'),
+  me: () => api.get('/auth/me'),
+  getRoles: () => api.get('/roles'),
 };
 
 // ==================== TAX RATINGS ====================

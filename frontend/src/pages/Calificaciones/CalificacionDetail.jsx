@@ -1,0 +1,156 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { taxRatingsAPI } from '../../services/api';
+import { formatDate } from '../../utils/dateFormat';
+import { RATING_STATUS_LABELS } from '../../utils/constants';
+import '../../styles/Calificaciones.css';
+
+const CalificacionDetail = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const [calificacion, setCalificacion] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchCalificacion();
+  }, [id]);
+
+  const fetchCalificacion = async () => {
+    try {
+      setLoading(true);
+      const response = await taxRatingsAPI.get(id);
+      setCalificacion(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching calificacion:', err);
+      setError('Error al cargar la calificación');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('¿Estás seguro de eliminar esta calificación?')) return;
+    
+    try {
+      await taxRatingsAPI.delete(id);
+      navigate('/calificaciones');
+    } catch (err) {
+      console.error('Error deleting calificacion:', err);
+      alert('Error al eliminar la calificación');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="calificaciones-container">
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !calificacion) {
+    return (
+      <div className="calificaciones-container">
+        <div className="error-message">{error || 'Calificación no encontrada'}</div>
+        <button className="btn-secondary" onClick={() => navigate('/calificaciones')}>
+          ← Volver
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="calificaciones-container">
+      <div className="detail-header">
+        <div>
+          <h1>Detalle de Calificación</h1>
+          <p className="detail-subtitle">ID: {calificacion.id}</p>
+        </div>
+        <div className="header-actions">
+          <button 
+            className="btn-secondary"
+            onClick={() => navigate('/calificaciones')}
+          >
+            ← Volver
+          </button>
+          <button 
+            className="btn-primary"
+            onClick={() => navigate(`/calificaciones/${id}/editar`)}
+          >
+            ✏️ Editar
+          </button>
+          <button 
+            className="btn-danger"
+            onClick={handleDelete}
+          >
+            🗑️ Eliminar
+          </button>
+        </div>
+      </div>
+
+      <div className="detail-content">
+        <div className="detail-section">
+          <h2>Información General</h2>
+          <div className="detail-grid">
+            <div className="detail-item">
+              <label>Issuer</label>
+              <p>{calificacion.issuer_name || calificacion.issuer}</p>
+            </div>
+            <div className="detail-item">
+              <label>Instrumento</label>
+              <p>{calificacion.instrument_name || calificacion.instrument}</p>
+            </div>
+            <div className="detail-item">
+              <label>Rating</label>
+              <p><span className="rating-badge large">{calificacion.rating}</span></p>
+            </div>
+            <div className="detail-item">
+              <label>Estado</label>
+              <p>
+                <span className={`status-badge status-${calificacion.estado?.toLowerCase()}`}>
+                  {RATING_STATUS_LABELS[calificacion.estado] || calificacion.estado}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="detail-section">
+          <h2>Fechas</h2>
+          <div className="detail-grid">
+            <div className="detail-item">
+              <label>Fecha de Emisión</label>
+              <p>{formatDate(calificacion.fecha_emision)}</p>
+            </div>
+            <div className="detail-item">
+              <label>Fecha de Vigencia</label>
+              <p>{formatDate(calificacion.fecha_vigencia)}</p>
+            </div>
+            <div className="detail-item">
+              <label>Creado</label>
+              <p>{formatDate(calificacion.created_at)}</p>
+            </div>
+            <div className="detail-item">
+              <label>Última actualización</label>
+              <p>{formatDate(calificacion.updated_at)}</p>
+            </div>
+          </div>
+        </div>
+
+        {calificacion.notas && (
+          <div className="detail-section">
+            <h2>Notas</h2>
+            <p className="detail-notes">{calificacion.notas}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CalificacionDetail;

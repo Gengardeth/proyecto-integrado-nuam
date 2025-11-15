@@ -12,9 +12,16 @@ class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        username = request.data.get('username')
+        email = request.data.get('email')
         password = request.data.get('password')
-        user = authenticate(request, username=username, password=password)
+        
+        # Buscar usuario por email
+        try:
+            user_obj = Usuario.objects.get(email=email)
+            user = authenticate(request, username=user_obj.username, password=password)
+        except Usuario.DoesNotExist:
+            user = None
+            
         if user is not None:
             login(request, user)
             return Response({'detail': 'Login exitoso', 'user': UsuarioSerializer(user).data})

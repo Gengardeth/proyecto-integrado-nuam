@@ -1,0 +1,26 @@
+/* Layout Principal */
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f7fafc;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.layout-main {
+  flex: 1;
+  margin-left: 250px; /* Ancho del sidebar */
+  overflow-x: hidden;
+  min-height: 100vh;
+  width: calc(100% - 250px);
+  max-width: calc(100vw - 250px);
+  box-sizing: border-box;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .layout-main {
+    margin-left: 0;
+    width: 100%;
+  }
+}

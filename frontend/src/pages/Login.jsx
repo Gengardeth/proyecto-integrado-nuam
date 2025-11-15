@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import nuamLogo from '../assets/nuam-logo.svg';
 import '../styles/Login.css';
 
 const Login = () => {
-  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -37,12 +38,7 @@ const Login = () => {
       
       <div className="login-box">
         <div className="login-logo">
-          <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 30 L30 10 L30 50 Z" fill="#FF5722"/>
-            <text x="45" y="42" fontSize="32" fontWeight="bold" fill="#FF5722" fontFamily="Arial, sans-serif">
-              nuam
-            </text>
-          </svg>
+          <img src={nuamLogo} alt="NUAM Exchange" />
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -50,13 +46,13 @@ const Login = () => {
           
           <div className="form-group">
             <input
-              type="text"
-              name="username"
-              placeholder="Email o nombre de usuario"
-              value={credentials.username}
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={credentials.email}
               onChange={handleChange}
               required
-              autoComplete="username"
+              autoComplete="email"
             />
           </div>
 

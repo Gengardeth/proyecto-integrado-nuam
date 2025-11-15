@@ -1,25 +1,44 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import nuamLogo from '../assets/nuam-logo.svg';
 import '../styles/Sidebar.css';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  const menuItems = [
-    { path: '/dashboard', icon: '📊', label: 'Dashboard' },
-    { path: '/calificaciones', icon: '📋', label: 'Calificaciones' },
-    { path: '/reportes', icon: '📈', label: 'Reportes' },
-    { path: '/carga-masiva', icon: '📦', label: 'Carga Masiva' },
-    { path: '/auditoria', icon: '🔍', label: 'Auditoría' },
-  ];
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  // Menú dinámico según el rol del usuario
+  const getMenuItems = () => {
+    const baseItems = [
+      { path: '/dashboard', icon: '📊', label: 'Dashboard', roles: ['ADMIN', 'ANALISTA', 'AUDITOR'] },
+      { path: '/calificaciones', icon: '📋', label: 'Calificaciones', roles: ['ADMIN', 'ANALISTA', 'AUDITOR'] },
+      { path: '/reportes', icon: '📈', label: 'Reportes', roles: ['ADMIN', 'ANALISTA', 'AUDITOR'] },
+    ];
+
+    // Agregar opciones específicas por rol
+    if (user?.rol === 'ADMIN' || user?.rol === 'ANALISTA') {
+      baseItems.push({ path: '/carga-masiva', icon: '📦', label: 'Carga Masiva', roles: ['ADMIN', 'ANALISTA'] });
+    }
+
+    if (user?.rol === 'ADMIN' || user?.rol === 'AUDITOR') {
+      baseItems.push({ path: '/auditoria', icon: '🔍', label: 'Auditoría', roles: ['ADMIN', 'AUDITOR'] });
+    }
+
+    return baseItems.filter(item => !item.roles || item.roles.includes(user?.rol));
+  };
+
+  const menuItems = getMenuItems();
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo">
-        <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-          <path d="M10 25 L20 15 L20 35 Z" fill="#FF5722"/>
-        </svg>
+      <div className="sidebar-logo" onClick={() => navigate('/dashboard')} style={{ cursor: 'pointer' }}>
+        <img src={nuamLogo} alt="NUAM" className="sidebar-logo-img" />
       </div>
 
       <nav className="sidebar-menu">
@@ -47,7 +66,7 @@ const Sidebar = () => {
             <div className="user-role">{user?.rol}</div>
           </div>
         </div>
-        <button onClick={logout} className="logout-button" title="Cerrar sesión">
+        <button onClick={handleLogout} className="logout-button" title="Cerrar sesión">
           🚪
         </button>
       </div>
