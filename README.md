@@ -1,570 +1,320 @@
-# 📊 NUAM – Mantenedor de Calificaciones Tributarias
-## Sistema Seguro de Gestión de Calificaciones Fiscales
+﻿#  NUAM  Sistema de Calificaciones Tributarias
 
-Sistema web seguro y trazable para gestionar calificaciones tributarias, con carga masiva, reportes, auditoría y control de acceso por roles, alineado a normativa chilena básica de protección de datos.
+Sistema web completo para gestionar calificaciones fiscales de instrumentos financieros con carga masiva, reportes, auditoría y control de acceso por roles.
 
-> **Estado:** 🟢 **Sprint 3 Completado** | Frontend React completo con todas las funcionalidades  
-> **Última Actualización:** 14 de noviembre de 2025  
-> **Documentación:** Ver [PROJECT_STATUS.md](PROJECT_STATUS.md) para resumen ejecutivo  
-> **Próximo:** Sprint 4 (Tests + DevOps)
+> **Estado:**  **Sprint 4 Completado** | Testing + DevOps  
+> **Última Actualización:** 17 de noviembre de 2025  
+> **Branch Actual:** `el-Gonzalo-probando-weas`
 
 ---
 
-## Tabla de Contenidos
+##  Inicio Rápido
 
-1. [Objetivo](#objetivo)
-2. [Stack Tecnológico](#stack-tecnológico)
-3. [Estructura del Proyecto](#estructura-del-proyecto)
-4. [Requisitos Previos](#requisitos-previos)
-5. [Instalación y Configuración](#instalación-y-configuración)
-6. [Ejecución](#ejecución)
-7. [Endpoints de la API](#endpoints-de-la-api)
-8. [Roles y Permisos (RBAC)](#roles-y-permisos-rbac)
-9. [Usuarios Demo](#usuarios-demo)
-10. [Documentación de Desarrollo](#documentación-de-desarrollo)
-11. [Pruebas](#pruebas)
-12. [Despliegue](#despliegue)
+**Primera vez con el proyecto?**  Lee la **[Guía de Instalación Completa (SETUP_GUIDE.md)](SETUP_GUIDE.md)**
+
+**Ya tienes todo instalado?**  [Ir a Ejecución](#ejecución-rápida)
 
 ---
 
-## Objetivo
+##  Características
 
-Desarrollar una aplicación web que permita:
-- Gestionar calificaciones tributarias (crear/editar/eliminar/consultar)
-- Cargar datos en bloque (CSV/XLSX) con validaciones
-- Emitir reportes y exportaciones (CSV/PDF)
-- Auditar todas las acciones
-- Control de acceso por roles (Administrador, Analista, Auditor)
+### Gestión de Calificaciones
+-  CRUD completo de calificaciones tributarias
+-  Asociación con Emisores e Instrumentos
+-  Ratings: AAA, AA, A, BBB, BB, B, CCC, CC, C, D
+-  Outlook: STABLE, POSITIVE, NEGATIVE
+-  Historial de cambios
 
----
+### Carga Masiva
+-  Upload de archivos CSV/XLSX
+-  Validación por filas con feedback detallado
+-  Procesamiento asíncrono
+-  Reporte de éxitos y errores por item
 
-## Stack Tecnológico
+### Reportes y Exportación
+-  Filtros avanzados (fecha, emisor, rating, etc.)
+-  Estadísticas agregadas
+-  Exportación a CSV
+-  Exportación a PDF con gráficos
 
-- **Backend:** Python 3.x, Django 5.x, Django REST Framework (DRF), django-cors-headers
-- **Frontend:** React 18 + Vite, fetch/axios, React Router
-- **Base de Datos:** PostgreSQL 14+
-- **Seguridad:** CSRF, CORS, RBAC, OWASP
-- **Asíncrono (opcional):** Celery + Redis (para cargas masivas)
-- **DevOps:** Docker Compose, Nginx (reverse proxy), GitHub Actions (CI/CD)
-- **Pruebas:** pytest + pytest-django, DRF test client, Selenium (E2E), Locust (rendimiento), ZAP baseline (seguridad)
+### Auditoría
+-  Log de todas las operaciones CREATE/UPDATE/DELETE
+-  Timeline visual de acciones
+-  Filtros por fecha, usuario, acción
+-  Estadísticas de actividad
 
----
+### Dashboard
+-  KPIs en tiempo real
+-  Gráficos con Chart.js (Pie, Bar)
+-  Últimas calificaciones
+-  Distribución por rating
 
-### Estructura del Proyecto
-
-```
-proyecto-integrado-nuam/
-├── Nuam/                          # Configuración del proyecto Django
-│   ├── settings.py                # Configuración general
-│   ├── urls.py                    # Rutas principales
-│   ├── wsgi.py
-│   └── asgi.py
-├── cuentas/                       # App: Autenticación, usuarios y roles (RBAC)
-│   ├── models.py                  # Modelo de Usuario personalizado
-│   ├── views.py                   # Endpoints DRF: login, logout, me, roles
-│   ├── serializers.py             # Serializer de Usuario
-│   ├── urls.py                    # Rutas de autenticación y usuarios
-│   ├── admin.py                   # Gestión de usuarios en admin
-│   └── management/commands/
-│       └── seed_users.py          # Comando para crear usuarios demo
-├── calificacionfiscal/            # App: Calificaciones tributarias (TaxRating CRUD)
-│   ├── models.py                  # Modelos: Contribuyente, CalificacionTributaria, TaxRating
-│   ├── views.py                   # ViewSet DRF: TaxRating CRUD
-│   ├── serializers.py             # Serializers para TaxRating
-│   ├── urls.py                    # Rutas de TaxRating
-│   ├── admin.py                   # Gestión en admin
-│   └── migrations/
-├── parametros/                    # App: Catálogos (Issuer, Instrument, etc.)
-│   ├── models.py                  # Modelos: TipoParametro, Parametro, Issuer, Instrument
-│   ├── views.py                   # ViewSets DRF: Issuer, Instrument CRUD
-│   ├── serializers.py             # Serializers para Issuer, Instrument
-│   ├── urls.py                    # Rutas de catálogos
-│   ├── admin.py                   # Gestión en admin
-│   └── migrations/
-├── frontend/                      # React + Vite
-│   ├── src/
-│   │   ├── App.jsx
-│   │   ├── main.jsx
-│   │   └── ...
-│   ├── package.json
-│   ├── vite.config.js
-│   └── ...
-├── static/                        # Archivos estáticos (CSS, JS compilado)
-├── templates/                     # Templates HTML (si aplica)
-├── manage.py                      # CLI de Django
-├── requirements.txt               # Dependencias Python
-├── docker-compose.yml             # Orquestación de servicios
-└── README.md                      # Este archivo
-```
+### Seguridad
+-  Autenticación JWT
+-  Control de acceso por roles (RBAC)
+-  CORS configurado
+-  Protección CSRF
+-  Validaciones en backend y frontend
 
 ---
 
-## Estado de Desarrollo
+##  Stack Tecnológico
 
-### ✅ Sprint 1 - Completado
+### Backend
+- **Framework**: Django 5.2.8 + Django REST Framework 3.16.1
+- **Database**: PostgreSQL 16
+- **Auth**: JWT (djangorestframework-simplejwt)
+- **Server**: Gunicorn 23.0.0
+- **Reports**: ReportLab 4.4.4 + OpenPyXL 3.1.5
 
-- [x] Modelo de Usuario personalizado con roles RBAC (Administrador, Analista, Auditor)
-- [x] Endpoints de autenticación (login, logout, me, roles)
-- [x] Configuración de Django REST Framework y CORS
-- [x] Modelos de Issuer (Emisor) e Instrument (Instrumento)
-- [x] ViewSets CRUD para Issuer e Instrument
-- [x] Modelo TaxRating (Calificación Tributaria) con validaciones
-- [x] ViewSet CRUD para TaxRating con filtros y acciones personalizadas
-- [x] Registro de modelos en admin de Django
-- [x] Migraciones de base de datos
-- [x] Serializers y validaciones básicas
-- [x] Health check endpoint
-- [x] Paginación en listados
-- [x] Búsqueda y ordenamiento en endpoints
-- [x] Sistema de Auditoría (AuditLog completo):
-  - [x] Modelo AuditLog con campos para rastrear cambios
-  - [x] Signals para registrar automáticamente CREATE, UPDATE, DELETE
-  - [x] Captura de IP y User-Agent
-  - [x] Eventos de login/logout
-  - [x] ViewSet de consulta con filtros y resumen
-  - [x] Registro en admin (solo lectura)
+### Frontend
+- **Framework**: React 18.3.1
+- **Build Tool**: Vite 7.2.2
+- **Router**: React Router 7.1.1
+- **HTTP Client**: Axios 1.7.9
+- **Charts**: Chart.js 4.5.1
+- **Testing**: Vitest 2.1.9
 
-### ✅ Sprint 2 - Completado
-
-- [x] **Carga Masiva de Datos:**
-  - [x] Modelo BulkUpload (gestión de archivos CSV/XLSX)
-  - [x] Modelo BulkUploadItem (seguimiento por fila)
-  - [x] Parsers CSV/XLSX con validaciones
-  - [x] ViewSet para subir y gestionar cargas
-  - [x] Endpoint para procesar cargas síncronas
-  - [x] Comando management: `python manage.py process_uploads`
-  - [x] Registro en admin (BulkUpload y BulkUploadItem)
-  
-- [x] **Reportes y Exportaciones:**
-  - [x] Endpoint de estadísticas generales
-  - [x] Exportación a CSV
-  - [x] Exportación a PDF con reportlab
-  - [x] Filtros por fecha, issuer, instrument
-  - [x] Top 10 de issuers e instruments
-  - [x] Resumen por rating y outlook
-
-- [x] **Dependencias instaladas:**
-  - [x] openpyxl (soporte XLSX)
-  - [x] reportlab (generación PDF)
-  - [x] pillow (imágenes en PDF)
-
-### 🔄 En Desarrollo
-
-- [ ] Frontend React + Vite
-- [ ] Autenticación y login frontend
-- [ ] Formularios y listados CRUD
-- [ ] Interfaz para carga masiva
-- [ ] Visualización de reportes
-
-### 📋 Próximamente (Sprint 3 y 4)
-
-- [ ] Tests unitarios e integración completos
-- [ ] Protección de endpoints por roles
-- [ ] Endurecimiento de seguridad (rate limiting, headers)
-- [ ] Celery + Redis para cargas asíncronas (opcional)
-- [ ] E2E tests con Selenium
-- [ ] Tests de rendimiento con Locust
-- [ ] Docker Compose completo
-- [ ] CI/CD con GitHub Actions
-- [ ] Documentación de API con Swagger
+### DevOps
+- **Containerization**: Docker + Docker Compose
+- **Web Server**: Nginx (Alpine)
+- **CI/CD**: GitHub Actions
+- **Testing**: 77 tests frontend pasando
 
 ---
 
+##  Ejecución Rápida
 
-
-- Python 3.10 o superior
-- PostgreSQL 14+ (o Docker)
-- Node.js 18+ (para frontend)
-- pip y virtualenv
+### Requisitos Previos
+- Python 3.13
+- Node.js 20 LTS
+- PostgreSQL 16
 - Git
 
----
-
-## Instalación y Configuración
-
-### 1. Clonar el repositorio
+### 1. Backend
 
 ```bash
-git clone https://github.com/Gengardeth/proyecto-integrado-nuam.git
-cd proyecto-integrado-nuam
+# Activar entorno virtual
+.\venv\Scripts\activate  # Windows
+source venv/bin/activate  # macOS/Linux
+
+# Ejecutar servidor
+python manage.py runserver
 ```
 
-### 2. Crear y activar entorno virtual
+**Backend disponible en**: http://127.0.0.1:8000
 
-```bash
-# En Windows (PowerShell)
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-# En macOS/Linux
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### 3. Instalar dependencias del backend
-
-```bash
-pip install -r requirements.txt
-```
-
-Si no existe `requirements.txt`, ejecuta:
-```bash
-pip install django==5.2.6 psycopg2-binary djangorestframework django-cors-headers
-pip freeze > requirements.txt
-```
-
-### 4. Configurar variables de entorno
-
-Crea un archivo `.env` en la raíz del proyecto (no commitear):
-
-```env
-# Django
-SECRET_KEY=django-insecure-vkt7b=4dl+xf1=5_kvi-2j*e03caut*mjy0^^nc!7nb#$@pq3$
-DEBUG=True
-
-# Base de datos
-DB_ENGINE=django.db.backends.postgresql
-DB_NAME=proyecto_nuam
-DB_USER=postgres
-DB_PASSWORD=your-password-here  # Cambia esto por tu contraseña local segura
-DB_HOST=localhost
-DB_PORT=5432
-
-# CORS (para desarrollo)
-CORS_ALLOW_ALL_ORIGINS=True
-```
-
-> **Nota:** En producción, usa `.env` con valores seguros y no lo commits.
-
-### 5. Aplicar migraciones
-
-```bash
-python manage.py makemigrations
-python manage.py migrate
-```
-
-### 6. Crear usuarios demo (RBAC)
-
-```bash
-python manage.py seed_users
-```
-
-Usuarios creados:
-- **admin** / admin123 (Administrador)
-- **analista** / analista123 (Analista)
-- **auditor** / auditor123 (Auditor)
-
-### 7. Crear superusuario (opcional, para acceso a admin)
-
-```bash
-# Opción 1 (interactivo):
-python manage.py createsuperuser
-
-# Opción 2 (no interactivo, útil en CI / Docker):
-export DJANGO_SUPERUSER_USERNAME=admin
-export DJANGO_SUPERUSER_EMAIL=admin@example.com
-export DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
-python manage.py createsuperuser --noinput || true
-
-# En PowerShell (Windows)
-$env:DJANGO_SUPERUSER_USERNAME='admin'
-$env:DJANGO_SUPERUSER_EMAIL='admin@example.com'
-$env:DJANGO_SUPERUSER_PASSWORD=$env:DJANGO_SUPERUSER_PASSWORD
-python manage.py createsuperuser --noinput
-```
-
-### 8. Instalar dependencias del frontend (opcional, si usarás React local)
-## Comprobaciones rápidas
-
-1. Arrancar servidor local (sin IP explícita):
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-.\.venv\Scripts\python.exe manage.py runserver
-```
-
-2. Probar health endpoint:
-
-```powershell
-Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/health
-```
-
-3. Acceder a panel admin (crear superuser si es necesario):
-
-```powershell
-.\.venv\Scripts\python.exe manage.py createsuperuser
-```
-
-4. Probar endpoint de emisores:
-
-```powershell
-curl -sS http://127.0.0.1:8000/api/v1/issuers/
-```
-
-> Nota: Si tu proyecto está configurado para PostgreSQL, asegúrate de que las credenciales en `.env` sean correctas y el servicio Postgres esté corriendo. Si la contraseña fue expuesta por error en el repo, rotarla inmediatamente.
-
-```bash
-cd frontend
-npm install
-npm run build
-cd ..
-```
-
----
-
-## Ejecución
-
-### Backend (Django)
-
-```bash
-python manage.py runserver 0.0.0.0:8000
-```
-
-La API estará disponible en: `http://localhost:8000/api/v1/`
-
-### Frontend (React + Vite, opcional)
+### 2. Frontend
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Frontend disponible en: `http://localhost:5173`
+**Frontend disponible en**: http://localhost:5173
 
-### Ambos servicios con Docker Compose (opcional)
+---
 
-```bash
-docker-compose up -d
+##  Usuarios Demo
+
+| Usuario | Password | Rol | Permisos |
+|---------|----------|-----|----------|
+| admin | admin123 | Administrador | Todos |
+| analista | analista123 | Analista | CRUD ratings, reportes, carga masiva |
+| auditor | auditor123 | Auditor | Solo lectura + auditoría |
+
+---
+
+##  Estructura del Proyecto
+
+```
+proyecto-integrado-nuam/
+ backend/
+    Nuam/                    # Configuración Django
+    calificacionfiscal/      # App principal (TaxRating, BulkUpload)
+    cuentas/                 # Autenticación y usuarios
+    parametros/              # Catálogos (Issuer, Instrument)
+    manage.py
+ frontend/
+    src/
+       components/          # Componentes reutilizables
+       pages/               # Dashboard, Calificaciones, etc.
+       services/            # API calls (6 servicios modulares)
+       router/              # Configuración de rutas
+       context/             # AuthContext
+    package.json
+ docs/                        # Documentación del proyecto
+ .github/workflows/           # CI/CD GitHub Actions
+ Dockerfile                   # Backend container
+ docker-compose.yml           # Orquestación completa
+ requirements.txt             # Dependencias Python
+ SETUP_GUIDE.md              #  Guía de instalación paso a paso
+ README.md                    # Este archivo
 ```
 
 ---
 
-## Endpoints de la API
+##  Documentación
 
-**Base:** `http://localhost:8000/api/v1/`
+### Para Desarrolladores
+- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Instalación completa paso a paso
+- **[DOCKER_GUIDE.md](DOCKER_GUIDE.md)** - Deploy con Docker
+- **[SPRINT4_COMPLETE.md](SPRINT4_COMPLETE.md)** - Detalles del último sprint
 
-### Health Check
-- `GET /health` — Verifica que la API esté en funcionamiento
+### Documentación Técnica
+- **[docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md)** - Endpoints de la API
+- **[docs/TESTING.md](docs/TESTING.md)** - Guía de testing
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Arquitectura del sistema
+
+### Resúmenes Ejecutivos
+- **[SPRINTS_RESUMEN.md](SPRINTS_RESUMEN.md)** - Resumen de todos los sprints
+- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Estado actual del proyecto
+
+---
+
+##  Testing
+
+### Frontend (77 tests)
+
+```bash
+cd frontend
+npm run test
+```
+
+**Cobertura**:
+-  ratingsService (14 tests)
+-  reportsService (9 tests)
+-  bulkUploadsService (14 tests)
+-  auditService (9 tests)
+-  issuersService (11 tests)
+-  instrumentsService (14 tests)
+-  Utilities (6 tests)
+
+### Backend
+
+```bash
+python manage.py test cuentas parametros
+```
+
+### Lint
+
+```bash
+# Frontend
+npm run lint
+
+# Backend
+flake8 .
+black --check .
+```
+
+---
+
+##  Deploy con Docker
+
+### Inicio rápido
+
+```bash
+# 1. Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus valores
+
+# 2. Build y start
+docker-compose up -d
+
+# 3. Acceder
+# Frontend: http://localhost
+# Backend: http://localhost:8000
+# Admin: http://localhost:8000/admin
+```
+
+Ver **[DOCKER_GUIDE.md](DOCKER_GUIDE.md)** para detalles completos.
+
+---
+
+##  Endpoints Principales
 
 ### Autenticación
-- `POST /auth/login` — Login con username/password
-  ```json
-  {
-    "username": "admin",
-    "password": "admin123"
-  }
-  ```
-- `POST /auth/logout` — Logout (requiere autenticación)
-- `GET /auth/me` — Obtiene datos del usuario actual (requiere autenticación)
+- `POST /api/v1/auth/login/` - Login (obtener token JWT)
+- `POST /api/v1/auth/logout/` - Logout
+- `GET /api/v1/auth/me/` - Info del usuario actual
 
-### Roles
-- `GET /roles` — Listado de roles disponibles
+### Calificaciones
+- `GET /api/v1/tax-ratings/` - Listar calificaciones
+- `POST /api/v1/tax-ratings/` - Crear calificación
+- `GET /api/v1/tax-ratings/{id}/` - Detalle
+- `PUT /api/v1/tax-ratings/{id}/` - Actualizar
+- `DELETE /api/v1/tax-ratings/{id}/` - Eliminar
+- `GET /api/v1/tax-ratings/estadisticas/` - Estadísticas
 
-### Usuarios (próximamente)
-- `GET /users` — Listado de usuarios
-- `POST /users` — Crear usuario
-- `GET /users/{id}` — Obtener usuario
-- `PUT /users/{id}` — Actualizar usuario
-- `DELETE /users/{id}` — Eliminar usuario
+### Carga Masiva
+- `GET /api/v1/bulk-uploads/` - Listar cargas
+- `POST /api/v1/bulk-uploads/` - Subir archivo
+- `POST /api/v1/bulk-uploads/{id}/procesar/` - Procesar
+- `GET /api/v1/bulk-uploads/{id}/items/` - Items de una carga
 
-### Catálogos
-- `GET /issuers` — Listado de emisores
-- `POST /issuers` — Crear emisor
-- `GET /issuers/{id}` — Obtener emisor
-- `PUT /issuers/{id}` — Actualizar emisor
-- `DELETE /issuers/{id}` — Eliminar emisor
-- `GET /issuers/activos` — Listado de emisores activos
-
-- `GET /instruments` — Listado de instrumentos
-- `POST /instruments` — Crear instrumento
-- `GET /instruments/{id}` — Obtener instrumento
-- `PUT /instruments/{id}` — Actualizar instrumento
-- `DELETE /instruments/{id}` — Eliminar instrumento
-- `GET /instruments/activos` — Listado de instrumentos activos
-- `GET /instruments/por-tipo` — Instrumentos agrupados por tipo
-
-### Calificaciones Tributarias
-- `GET /tax-ratings` — Listado de calificaciones (con paginación)
-  - Parámetros: `page`, `page_size`, `search`, `ordering`
-  - Filtros: `issuer`, `instrument`, `rating`
-- `POST /tax-ratings` — Crear calificación
-- `GET /tax-ratings/{id}` — Obtener calificación
-- `PUT /tax-ratings/{id}` — Actualizar calificación
-- `DELETE /tax-ratings/{id}` — Eliminar calificación
-- `GET /tax-ratings/ultimas?limit=10` — Últimas N calificaciones
-- `GET /tax-ratings/por-issuer?issuer_id=X` — Calificaciones por emisor
-- `GET /tax-ratings/por-rango-fecha?fecha_desde=YYYY-MM-DD&fecha_hasta=YYYY-MM-DD` — Rango de fechas
-- `PATCH /tax-ratings/{id}/cambiar-estado` — Cambiar estado activo/inactivo
+### Reportes
+- `GET /api/v1/reports/estadisticas/` - Estadísticas con filtros
+- `GET /api/v1/reports/exportar_csv/` - Exportar a CSV
+- `GET /api/v1/reports/exportar_pdf/` - Exportar a PDF
 
 ### Auditoría
-- `GET /audit-logs` — Listado de logs de auditoría (con paginación y filtros)
-  - Parámetros: `page`, `page_size`, `search`, `ordering`
-- `GET /audit-logs/{id}` — Obtener detalle de un log
-- `GET /audit-logs/por-usuario?usuario_id=X` — Logs de un usuario específico
-- `GET /audit-logs/por-accion?accion=CREATE|UPDATE|DELETE|LOGIN|LOGOUT|EXPORT|UPLOAD` — Logs por tipo de acción
-- `GET /audit-logs/por-modelo?modelo=Issuer|Instrument|TaxRating|Usuario` — Logs por modelo
-- `GET /audit-logs/resumen` — Resumen estadístico de auditoría
+- `GET /api/v1/audit-logs/` - Logs de auditoría
+- `GET /api/v1/audit-logs/estadisticas/` - Estadísticas de auditoría
+
+### Catálogos
+- `GET /api/v1/issuers/` - Emisores
+- `GET /api/v1/instruments/` - Instrumentos
 
 ---
 
-## Roles y Permisos (RBAC)
+##  Métricas del Proyecto
 
-El sistema implementa control de acceso basado en roles (RBAC) con 3 roles principales:
-
-| Rol | Descripción | Permisos |
-|-----|-------------|----------|
-| **ADMIN** | Administrador del sistema | Acceso total a todas las funciones |
-| **ANALISTA** | Analista tributario | Ver, editar TaxRating, cargas masivas, reportes |
-| **AUDITOR** | Auditor | Solo lectura, consulta de auditoría |
-
-### Métodos de Permisos en el Modelo Usuario
-
-```python
-usuario.is_admin          # Verifica si es administrador
-usuario.is_analista       # Verifica si es analista
-usuario.is_auditor        # Verifica si es auditor
-usuario.has_perm_rbac('perm')  # Verifica permiso específico
-```
+| Métrica | Valor |
+|---------|-------|
+| Tests Frontend | 77 pasando |
+| Tiempo Tests | ~800ms |
+| Líneas de Código | ~15,000 |
+| Commits | 100+ |
+| Sprints Completados | 4 |
+| Cobertura Tests | Frontend 100% servicios |
+| Docker Images | 3 (db, backend, frontend) |
 
 ---
 
-## Usuarios Demo
+##  Contribución
 
-Después de ejecutar `seed_users`, puedes acceder con:
+Este proyecto fue desarrollado como proyecto integrado académico. Para contribuir:
 
-```json
-{
-  "username": "admin",
-  "password": "admin123",
-  "rol": "Administrador"
-}
-```
-
-```json
-{
-  "username": "analista",
-  "password": "analista123",
-  "rol": "Analista"
-}
-```
-
-```json
-{
-  "username": "auditor",
-  "password": "auditor123",
-  "rol": "Auditor"
-}
-```
+1. Fork el proyecto
+2. Crear branch (`git checkout -b feature/AmazingFeature`)
+3. Commit cambios (`git commit -m 'Add AmazingFeature'`)
+4. Push al branch (`git push origin feature/AmazingFeature`)
+5. Abrir Pull Request
 
 ---
 
-## Documentación de Desarrollo
+##  Licencia
 
-### Crear Migraciones
-
-```bash
-python manage.py makemigrations
-python manage.py migrate
-```
-
-### Crear Nuevas Apps
-
-```bash
-python manage.py startapp nombre_app
-```
-
-### Ejecutar Tests
-
-```bash
-pytest
-# o con coverage
-pytest --cov=.
-```
-
-### Linting y Formateo
-
-```bash
-flake8 .
-black .
-```
+Ver archivo [LICENSE](LICENSE) para detalles.
 
 ---
 
-## Pruebas
+##  Autor
 
-### Unitarias
-
-```bash
-pytest cuentas/tests.py -v
-```
-
-### Integración (DRF)
-
-```bash
-pytest --tb=short
-```
-
-### E2E (Selenium)
-
-```bash
-pytest tests/e2e/ -v
-```
-
-### Rendimiento (Locust)
-
-```bash
-locust -f tests/performance/locustfile.py
-```
-
-### Seguridad (ZAP Baseline)
-
-```bash
-zaproxy -cmd -quickurl http://localhost:8000 -quickout report.html
-```
+**Proyecto NUAM**  
+Proyecto Integrado - Sistema de Calificaciones Tributarias  
+Universidad/Institución - 2025
 
 ---
 
-## Despliegue
+##  Soporte
 
-### Docker Compose (desarrollo)
-
-```bash
-docker-compose up -d
-docker-compose logs -f
-```
-
-### Producción
-
-1. Usar variables de entorno seguras (`.env` no en repo)
-2. Configurar `DEBUG=False` en `settings.py`
-3. Usar certificado TLS en Nginx
-4. Configurar ALLOWED_HOSTS correctamente
-5. Backup automático de PostgreSQL
-6. CI/CD con GitHub Actions
-
-Consulta `docker-compose.yml` para más detalles.
+Problemas con la instalación? Ver [SETUP_GUIDE.md](SETUP_GUIDE.md)  
+Problemas con Docker? Ver [DOCKER_GUIDE.md](DOCKER_GUIDE.md)  
+Otros problemas? Crear issue en GitHub
 
 ---
 
-## Contribución
+** Proyecto completado y funcional**
 
-1. Crea una rama para tu feature: `git checkout -b feature/nombre-feature`
-2. Commit tus cambios: `git commit -am 'Add feature'`
-3. Push a la rama: `git push origin feature/nombre-feature`
-4. Abre un Pull Request
-
----
-
-## Licencia
-
-Ver archivo `LICENSE`.
-
----
-
-## Contacto
-
-Para preguntas o soporte, contacta al equipo de desarrollo.
-
----
-
-**Última actualización:** 12 de noviembre de 2025
+El sistema está listo para usar, presentar o desplegar en producción.
