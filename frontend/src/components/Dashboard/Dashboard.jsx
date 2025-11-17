@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { taxRatingsAPI, auditLogsAPI } from '../../services/api';
+import ratingsService from '../../services/ratings';
+import auditService from '../../services/audit';
+import StatusChart from './StatusChart';
 import { formatDate, getRelativeTime } from '../../utils/dateFormat';
 import { RATING_STATUS_LABELS, OUTLOOK_LABELS } from '../../utils/constants';
 import KPICard from './KPICard';
@@ -27,14 +29,14 @@ const Dashboard = () => {
       setLoading(true);
       
       // Obtener últimas calificaciones
-      const ratingsResponse = await taxRatingsAPI.getAll({ 
+      const ratingsResponse = await ratingsService.list({ 
         page_size: 5,
-        ordering: '-fecha_rating' 
+        ordering: '-valid_from' 
       });
       setRecentRatings(ratingsResponse.data.results || ratingsResponse.data || []);
       
       // Calcular estadísticas básicas
-      const allRatingsResponse = await taxRatingsAPI.getAll({ page_size: 1000 });
+      const allRatingsResponse = await ratingsService.list({ page_size: 1000 });
       const allRatings = allRatingsResponse.data.results || allRatingsResponse.data || [];
       
       const vigentes = allRatings.filter(r => r.estado === 'VIGENTE').length;
@@ -50,7 +52,7 @@ const Dashboard = () => {
       // Obtener auditoría reciente (si el usuario tiene permisos)
       if (user?.rol === 'ADMIN' || user?.rol === 'AUDITOR') {
         try {
-          const auditResponse = await auditLogsAPI.getAll({ page_size: 5 });
+          const auditResponse = await auditService.list({ page_size: 5 });
           setRecentAudits(auditResponse.data.results || auditResponse.data || []);
         } catch (error) {
           console.log('No se pudo cargar auditoría:', error);
@@ -111,7 +113,6 @@ const Dashboard = () => {
           icon="⚠️"
           color="warning"
         />
-        
         <KPICard
           title="Últimas Cargas"
           value={recentRatings.length}
@@ -119,6 +120,7 @@ const Dashboard = () => {
           icon="📥"
           color="info"
         />
+        <StatusChart vigentes={stats.ratingsVigentes} vencidos={stats.ratingsVencidos} total={stats.totalRatings} />
       </div>
 
       {/* Contenido principal */}

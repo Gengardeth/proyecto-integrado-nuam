@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { taxRatingsAPI } from '../../services/api';
+import ratingsService from '../../services/ratings';
 import { formatDate } from '../../utils/dateFormat';
 import { RATING_STATUS_LABELS } from '../../utils/constants';
 import '../../styles/Calificaciones.css';
@@ -12,14 +12,10 @@ const CalificacionDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchCalificacion();
-  }, [id]);
-
-  const fetchCalificacion = async () => {
+  const fetchCalificacion = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await taxRatingsAPI.get(id);
+      const response = await ratingsService.get(id);
       setCalificacion(response.data);
       setError(null);
     } catch (err) {
@@ -28,13 +24,17 @@ const CalificacionDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchCalificacion();
+  }, [fetchCalificacion]);
 
   const handleDelete = async () => {
     if (!window.confirm('¿Estás seguro de eliminar esta calificación?')) return;
     
     try {
-      await taxRatingsAPI.delete(id);
+      await ratingsService.remove(id);
       navigate('/calificaciones');
     } catch (err) {
       console.error('Error deleting calificacion:', err);
@@ -99,11 +99,11 @@ const CalificacionDetail = () => {
           <div className="detail-grid">
             <div className="detail-item">
               <label>Issuer</label>
-              <p>{calificacion.issuer_name || calificacion.issuer}</p>
+              <p>{calificacion.issuer_nombre || calificacion.issuer}</p>
             </div>
             <div className="detail-item">
               <label>Instrumento</label>
-              <p>{calificacion.instrument_name || calificacion.instrument}</p>
+              <p>{calificacion.instrument_nombre || calificacion.instrument}</p>
             </div>
             <div className="detail-item">
               <label>Rating</label>
@@ -112,8 +112,8 @@ const CalificacionDetail = () => {
             <div className="detail-item">
               <label>Estado</label>
               <p>
-                <span className={`status-badge status-${calificacion.estado?.toLowerCase()}`}>
-                  {RATING_STATUS_LABELS[calificacion.estado] || calificacion.estado}
+                <span className={`status-badge status-${calificacion.status?.toLowerCase()}`}>
+                  {RATING_STATUS_LABELS[calificacion.status] || calificacion.status}
                 </span>
               </p>
             </div>
@@ -124,28 +124,28 @@ const CalificacionDetail = () => {
           <h2>Fechas</h2>
           <div className="detail-grid">
             <div className="detail-item">
-              <label>Fecha de Emisión</label>
-              <p>{formatDate(calificacion.fecha_emision)}</p>
+              <label>Válido desde</label>
+              <p>{formatDate(calificacion.valid_from)}</p>
             </div>
             <div className="detail-item">
-              <label>Fecha de Vigencia</label>
-              <p>{formatDate(calificacion.fecha_vigencia)}</p>
+              <label>Válido hasta</label>
+              <p>{formatDate(calificacion.valid_to)}</p>
             </div>
             <div className="detail-item">
               <label>Creado</label>
-              <p>{formatDate(calificacion.created_at)}</p>
+              <p>{formatDate(calificacion.creado_en)}</p>
             </div>
             <div className="detail-item">
               <label>Última actualización</label>
-              <p>{formatDate(calificacion.updated_at)}</p>
+              <p>{formatDate(calificacion.actualizado_en)}</p>
             </div>
           </div>
         </div>
 
-        {calificacion.notas && (
+        {calificacion.comments && (
           <div className="detail-section">
-            <h2>Notas</h2>
-            <p className="detail-notes">{calificacion.notas}</p>
+            <h2>Comentarios</h2>
+            <p className="detail-notes">{calificacion.comments}</p>
           </div>
         )}
       </div>

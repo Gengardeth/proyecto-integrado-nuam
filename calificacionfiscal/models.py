@@ -25,7 +25,7 @@ class CalificacionTributaria(models.Model):
 class TaxRating(models.Model):
     """
     Modelo para Calificación Tributaria.
-    Relaciona Issuer, Instrument con su calificación y fecha.
+    Relaciona Issuer, Instrument con su calificación, nivel de riesgo y fecha de vigencia.
     """
     RATING_CHOICES = [
         ('AAA', 'AAA - Riesgo muy bajo'),
@@ -40,32 +40,49 @@ class TaxRating(models.Model):
         ('D', 'D - En incumplimiento'),
     ]
     
+    RISK_LEVEL_CHOICES = [
+        ('MUY_BAJO', 'Muy Bajo'),
+        ('BAJO', 'Bajo'),
+        ('MODERADO', 'Moderado'),
+        ('ALTO', 'Alto'),
+        ('MUY_ALTO', 'Muy Alto'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('VIGENTE', 'Vigente'),
+        ('VENCIDO', 'Vencido'),
+        ('SUSPENDIDO', 'Suspendido'),
+        ('CANCELADO', 'Cancelado'),
+    ]
+    
     issuer = models.ForeignKey(Issuer, on_delete=models.PROTECT, related_name='tax_ratings')
     instrument = models.ForeignKey(Instrument, on_delete=models.PROTECT, related_name='tax_ratings')
     rating = models.CharField(max_length=10, choices=RATING_CHOICES)
-    fecha_rating = models.DateField()
-    fecha_vencimiento = models.DateField(null=True, blank=True)
+    risk_level = models.CharField(max_length=20, choices=RISK_LEVEL_CHOICES, default='MODERADO')
+    valid_from = models.DateField(verbose_name='Válido desde')
+    valid_to = models.DateField(null=True, blank=True, verbose_name='Válido hasta')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='VIGENTE')
+    comments = models.TextField(blank=True, verbose_name='Comentarios')
     analista = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='tax_ratings_creados')
-    outlook = models.CharField(max_length=20, choices=[('POSITIVO', 'Positivo'), ('ESTABLE', 'Estable'), ('NEGATIVO', 'Negativo')], default='ESTABLE')
-    notas = models.TextField(blank=True)
-    activo = models.BooleanField(default=True)
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 
+    
     class Meta:
-        ordering = ['-fecha_rating']
-        unique_together = ('issuer', 'instrument', 'fecha_rating')
+        ordering = ['-valid_from']
+        unique_together = ('issuer', 'instrument', 'valid_from')
         verbose_name = 'Calificación Tributaria'
         verbose_name_plural = 'Calificaciones Tributarias'
         indexes = [
-            models.Index(fields=['issuer', 'fecha_rating']),
-            models.Index(fields=['instrument', 'fecha_rating']),
+            models.Index(fields=['issuer', 'valid_from']),
+            models.Index(fields=['instrument', 'valid_from']),
             models.Index(fields=['rating']),
+            models.Index(fields=['status']),
             models.Index(fields=['creado_en']),
         ]
 
     def __str__(self):
-        return f"{self.issuer.nombre} - {self.instrument.nombre} ({self.rating}) - {self.fecha_rating}"
+        return f"{self.issuer.nombre} - {self.instrument.nombre} ({self.rating}) - {self.valid_from}"
 
 
 class BulkUpload(models.Model):

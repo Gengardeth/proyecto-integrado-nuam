@@ -1,10 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import LoginView, LogoutView, MeView, RolesView, AuditLogViewSet
+from .views import LoginView, LogoutView, MeView, RolesView, AuditLogViewSet, UsuarioViewSet
 from .health import HealthView
 
 router = DefaultRouter()
 router.register(r'audit-logs', AuditLogViewSet, basename='audit-log')
+router.register(r'users', UsuarioViewSet, basename='user')
 
 urlpatterns = [
     path('health', HealthView.as_view(), name='health'),

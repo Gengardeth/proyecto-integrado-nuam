@@ -17,7 +17,7 @@ const InstrumentsList = () => {
   const fetchInstruments = async () => {
     try {
       setLoading(true);
-      const response = await instrumentsAPI.list();
+      const response = await instrumentsAPI.getAll();
       setInstruments(response.data);
       setError(null);
     } catch (err) {
@@ -60,7 +60,7 @@ const InstrumentsList = () => {
     <div className="crud-container">
       <div className="crud-header">
         <h1>Instrumentos</h1>
-        <button className="btn-primary" onClick={() => navigate('/instruments/nuevo')}>
+        <button className="btn-primary" onClick={() => navigate('/instrumentos/nuevo')}>
           + Nuevo Instrumento
         </button>
       </div>
@@ -83,7 +83,7 @@ const InstrumentsList = () => {
             <tr>
               <th>Nombre</th>
               <th>Tipo</th>
-              <th>Issuer</th>
+              {/* Instrument no tiene relación con Issuer en el modelo actual */}
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -102,7 +102,7 @@ const InstrumentsList = () => {
                   <td>
                     <span className="type-badge">{inst.tipo}</span>
                   </td>
-                  <td>{inst.issuer_name || inst.issuer}</td>
+                  {/* <td>{inst.issuer_name || inst.issuer}</td> */}
                   <td>
                     <span className={`status-badge ${inst.activo ? 'status-active' : 'status-inactive'}`}>
                       {inst.activo ? 'Activo' : 'Inactivo'}
@@ -111,7 +111,7 @@ const InstrumentsList = () => {
                   <td className="actions-cell">
                     <button
                       className="btn-action btn-edit"
-                      onClick={() => navigate(`/instruments/${inst.id}/editar`)}
+                      onClick={() => navigate(`/instrumentos/${inst.id}/editar`)}
                       title="Editar"
                     >
                       ✏️

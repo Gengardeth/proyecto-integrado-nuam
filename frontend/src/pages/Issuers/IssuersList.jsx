@@ -17,7 +17,7 @@ const IssuersList = () => {
   const fetchIssuers = async () => {
     try {
       setLoading(true);
-      const response = await issuersAPI.list();
+      const response = await issuersAPI.getAll();
       setIssuers(response.data);
       setError(null);
     } catch (err) {
@@ -60,7 +60,7 @@ const IssuersList = () => {
     <div className="crud-container">
       <div className="crud-header">
         <h1>Issuers</h1>
-        <button className="btn-primary" onClick={() => navigate('/issuers/nuevo')}>
+        <button className="btn-primary" onClick={() => navigate('/emisores/nuevo')}>
           + Nuevo Issuer
         </button>
       </div>
@@ -84,7 +84,7 @@ const IssuersList = () => {
               <th>Código</th>
               <th>Nombre</th>
               <th>RUT</th>
-              <th>País</th>
+              {/* Sin campo país en el modelo actual */}
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -102,7 +102,7 @@ const IssuersList = () => {
                   <td><strong>{issuer.codigo}</strong></td>
                   <td>{issuer.nombre}</td>
                   <td>{issuer.rut}</td>
-                  <td>{issuer.pais}</td>
+                  {/* <td>{issuer.pais}</td> */}
                   <td>
                     <span className={`status-badge ${issuer.activo ? 'status-active' : 'status-inactive'}`}>
                       {issuer.activo ? 'Activo' : 'Inactivo'}
@@ -111,7 +111,7 @@ const IssuersList = () => {
                   <td className="actions-cell">
                     <button
                       className="btn-action btn-edit"
-                      onClick={() => navigate(`/issuers/${issuer.id}/editar`)}
+                      onClick={() => navigate(`/emisores/${issuer.id}/editar`)}
                       title="Editar"
                     >
                       ✏️

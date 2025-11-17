@@ -28,12 +28,13 @@
 .upload-card,
 .result-card,
 .instructions-card {
-  background: white;
-  border-radius: 12px;
+  background: var(--bg-primary);
+  border-radius: var(--border-radius);
   padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
   margin-bottom: 1.5rem;
+  backdrop-filter: saturate(160%) blur(4px);
 }
 
 /* Drop Zone */
@@ -76,17 +77,19 @@
 .file-upload-btn {
   display: inline-block;
   padding: 0.75rem 1.5rem;
-  background: #3182ce;
-  color: white;
-  border-radius: 6px;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: #fff;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: transform 0.25s, box-shadow 0.25s;
   margin: 0.5rem 0;
+  box-shadow: var(--shadow-sm);
 }
 
 .file-upload-btn:hover {
-  background: #2c5aa0;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .file-hint {
@@ -100,22 +103,25 @@
   font-size: 0.9rem;
 }
 
-.btn-remove {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid #fc8181;
-  background: white;
-  color: #e53e3e;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: #fff;
+  box-shadow: var(--shadow-sm);
 }
 
-.btn-remove:hover {
-  background: #fed7d7;
+.btn-primary:hover:not(:disabled) {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-secondary);
+}
 /* Progress */
 .progress-container {
   margin-top: 1.5rem;
@@ -202,7 +208,10 @@
 
 .result-header h2 {
   font-size: 1.5rem;
-  color: #1a202c;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   margin: 0;
 }
 
@@ -233,8 +242,8 @@
 }
 
 .stat-item.total {
-  background: #ebf8ff;
-  border-left: 4px solid #4299e1;
+  background: rgba(99,102,241,0.08);
+  border-left: 4px solid var(--primary-color);
 }
 
 .stat-icon {

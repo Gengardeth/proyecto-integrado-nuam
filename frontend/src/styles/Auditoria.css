@@ -177,6 +177,16 @@
   color: #4a5568;
 }
 
+.action-login {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.action-logout {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 .model-name {
   font-family: 'Courier New', monospace;
   background: #f7fafc;
@@ -237,6 +247,115 @@
 .pagination-info {
   color: #4a5568;
   font-weight: 500;
+}
+
+/* Timeline Styles */
+.timeline-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.timeline-day {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.timeline-date {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #2d3748;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.timeline-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 0.85rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  position: relative;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -32px;
+  top: 12px;
+  width: 12px;
+  height: 12px;
+  background: #667eea;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(102,126,234,0.15);
+}
+
+.timeline-time {
+  font-family: 'Courier New', monospace;
+  color: #4a5568;
+  font-size: 0.75rem;
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+}
+
+.timeline-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.timeline-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.user-avatar-small.mini {
+  width: 26px;
+  height: 26px;
+  font-size: 0.7rem;
+}
+
+.model-name.inline {
+  background: transparent;
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
+  border: 1px solid #cbd5e0;
+}
+
+.timeline-desc {
+  font-size: 0.75rem;
+  color: #2d3748;
+  line-height: 1.1rem;
+  word-break: break-word;
+}
+
+@media (max-width: 1024px) {
+  .timeline-item::before { left: -24px; }
+}
+
+@media (max-width: 640px) {
+  .timeline-item {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .timeline-time { min-width: unset; }
 }
 
 .loading-state {

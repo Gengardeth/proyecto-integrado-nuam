@@ -1,18 +1,21 @@
-import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../Sidebar';
+import Topbar from './Topbar';
 import './Layout.css';
 
 /**
- * Layout principal con Sidebar para páginas autenticadas
+ * Layout principal con Sidebar y Topbar para páginas autenticadas
  */
 const Layout = () => {
   return (
     <div className="layout">
       <Sidebar />
-      <main className="layout-main">
-        <Outlet />
-      </main>
+      <div className="layout-main">
+        <Topbar />
+        <main className="layout-content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };

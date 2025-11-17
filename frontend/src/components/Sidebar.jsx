@@ -16,7 +16,7 @@ const Sidebar = () => {
   // Menú dinámico según el rol del usuario
   const getMenuItems = () => {
     const baseItems = [
-      { path: '/dashboard', icon: '📊', label: 'Dashboard', roles: ['ADMIN', 'ANALISTA', 'AUDITOR'] },
+      { path: '/', icon: '📊', label: 'Dashboard', roles: ['ADMIN', 'ANALISTA', 'AUDITOR'] },
       { path: '/calificaciones', icon: '📋', label: 'Calificaciones', roles: ['ADMIN', 'ANALISTA', 'AUDITOR'] },
       { path: '/reportes', icon: '📈', label: 'Reportes', roles: ['ADMIN', 'ANALISTA', 'AUDITOR'] },
     ];
@@ -37,7 +37,7 @@ const Sidebar = () => {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo" onClick={() => navigate('/dashboard')} style={{ cursor: 'pointer' }}>
+      <div className="sidebar-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
         <img src={nuamLogo} alt="NUAM" className="sidebar-logo-img" />
       </div>
 
@@ -46,6 +46,7 @@ const Sidebar = () => {
           <NavLink
             key={item.path}
             to={item.path}
+            end={item.path === '/'}
             className={({ isActive }) => 
               isActive ? 'sidebar-item active' : 'sidebar-item'
             }

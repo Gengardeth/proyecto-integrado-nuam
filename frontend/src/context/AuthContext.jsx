@@ -17,18 +17,26 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.me();
       setUser(response.data);
       localStorage.setItem('user', JSON.stringify(response.data));
-      setLoading(false);
     } catch (error) {
-      console.error('Error fetching user:', error);
+      // No hacer console.error si es 403 o 401 (es normal cuando no hay sesión)
+      if (error.response?.status !== 403 && error.response?.status !== 401) {
+        console.error('Error fetching user:', error);
+      }
       setUser(null);
       localStorage.removeItem('user');
+    } finally {
       setLoading(false);
     }
   };
 
   const login = async (credentials) => {
     try {
-      const response = await authAPI.login(credentials);
+      // Asegurar que enviamos 'username' y 'password'
+      const payload = {
+        username: credentials.username || credentials.email,
+        password: credentials.password,
+      };
+      const response = await authAPI.login(payload);
       const userData = response.data.user;
       
       setUser(userData);

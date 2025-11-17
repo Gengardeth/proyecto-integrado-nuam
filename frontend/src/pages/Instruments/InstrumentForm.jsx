@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { instrumentsAPI, issuersAPI } from '../../services/api';
 import '../../styles/SharedCRUD.css';
@@ -27,23 +27,16 @@ const InstrumentForm = () => {
     'OTRO'
   ];
 
-  useEffect(() => {
-    fetchIssuers();
-    if (isEdit) {
-      fetchInstrument();
-    }
-  }, [id]);
-
-  const fetchIssuers = async () => {
+  const fetchIssuers = useCallback(async () => {
     try {
       const response = await issuersAPI.listActive();
       setIssuers(response.data);
     } catch (err) {
       console.error('Error fetching issuers:', err);
     }
-  };
+  }, []);
 
-  const fetchInstrument = async () => {
+  const fetchInstrument = useCallback(async () => {
     try {
       setLoading(true);
       const response = await instrumentsAPI.get(id);
@@ -54,7 +47,14 @@ const InstrumentForm = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchIssuers();
+    if (isEdit) {
+      fetchInstrument();
+    }
+  }, [isEdit, fetchIssuers, fetchInstrument]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

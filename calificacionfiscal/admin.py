@@ -16,23 +16,23 @@ class CalificacionTributariaAdmin(admin.ModelAdmin):
 
 @admin.register(TaxRating)
 class TaxRatingAdmin(admin.ModelAdmin):
-    list_display = ('issuer', 'instrument', 'rating', 'fecha_rating', 'outlook', 'activo')
-    list_filter = ('rating', 'outlook', 'activo', 'fecha_rating')
+    list_display = ('issuer', 'instrument', 'rating', 'risk_level', 'status', 'valid_from', 'valid_to')
+    list_filter = ('rating', 'risk_level', 'status', 'valid_from')
     search_fields = ('issuer__nombre', 'instrument__nombre')
-    date_hierarchy = 'fecha_rating'
+    date_hierarchy = 'valid_from'
     readonly_fields = ('creado_en', 'actualizado_en')
     fieldsets = (
         ('Información Básica', {
-            'fields': ('issuer', 'instrument', 'rating', 'outlook', 'activo')
+            'fields': ('issuer', 'instrument', 'rating', 'risk_level', 'status')
         }),
-        ('Fechas', {
-            'fields': ('fecha_rating', 'fecha_vencimiento')
+        ('Vigencia', {
+            'fields': ('valid_from', 'valid_to')
         }),
         ('Usuario', {
             'fields': ('analista',)
         }),
-        ('Observaciones', {
-            'fields': ('notas',)
+        ('Comentarios', {
+            'fields': ('comments',)
         }),
         ('Auditoría', {
             'fields': ('creado_en', 'actualizado_en'),

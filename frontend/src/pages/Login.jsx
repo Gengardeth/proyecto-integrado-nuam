@@ -5,7 +5,7 @@ import nuamLogo from '../assets/nuam-logo.svg';
 import '../styles/Login.css';
 
 const Login = () => {
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
+  const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -24,7 +24,7 @@ const Login = () => {
     const result = await login(credentials);
     
     if (result.success) {
-      navigate('/dashboard');
+      navigate('/');
     } else {
       setError(result.error);
       setLoading(false);
@@ -46,13 +46,13 @@ const Login = () => {
           
           <div className="form-group">
             <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={credentials.email}
+              type="text"
+              name="username"
+              placeholder="Usuario"
+              value={credentials.username}
               onChange={handleChange}
               required
-              autoComplete="email"
+              autoComplete="username"
             />
           </div>
 

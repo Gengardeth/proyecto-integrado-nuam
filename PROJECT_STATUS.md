@@ -1,53 +1,45 @@
-# 📈 NUAM - Estado del Proyecto
-## Reporte Ejecutivo de Progreso
+# 📈 NUAM - Estado del Proyecto (Resumen Condensado)
+## Vista Ejecutiva (ver `SPRINTS_RESUMEN.md` para detalle multi-sprint)
 
-**Última actualización:** 14 de noviembre de 2025  
-**Status:** 🟢 Sprint 3 Completado - Listo para Sprint 4
-
----
-
-## 📊 Resumen Ejecutivo
-
-### Sprint 1: Completado ✅
-Backend API Django/DRF con arquitectura segura, escalable y auditada.
-
-### Sprint 2: Completado ✅
-Carga masiva de datos (CSV/XLSX) y sistema de reportes con exportaciones (CSV/PDF).
-
-### Sprint 3: Completado ✅
-Frontend React completo con todas las páginas funcionales (Dashboard, CRUD, Reportes, Auditoría, Carga Masiva).
-
-**Líneas de Código Implementadas:** ~9,000 (Backend: 3,500 | Frontend: 4,500 | CSS: 1,500)  
-**Modelos Creados:** 8 (Usuario, Issuer, Instrument, TaxRating, AuditLog, BulkUpload, BulkUploadItem, etc.)  
-**Endpoints:** 45+ (CRUD, cargas masivas, reportes, filtros, acciones personalizadas)  
-**Páginas Frontend:** 12 páginas completas + 8 componentes reutilizables  
-**Cobertura de Requisitos:** 85% (Sprints 1-3 completos)
+**Última actualización:** 17 de noviembre de 2025  
+**Status:** 🟢 Sprints 1–3 completados | Preparando Sprint 4 (Testing + DevOps)
 
 ---
 
-## 🎯 Qué se Completó
+## 📊 Resumen Ejecutivo Sintético
+| Sprint | Foco | Entrega Principal |
+|--------|------|------------------|
+| 1 | Backend base (API, RBAC, Auditoría) | 30+ endpoints, trazabilidad total |
+| 2 | Carga masiva + Reportes | BulkUpload + exportaciones CSV/PDF + estadísticas |
+| 3 | Frontend completo | Dashboard, CRUD, Carga Masiva, Reportes, Auditoría |
+
+**Totales:** ~9K líneas código | 8 modelos | 45+ endpoints | Cobertura funcional ~85%. 
+
+---
+
+## 🎯 Áreas Clave Completadas
 
 ### Backend API (Django REST Framework)
 
-#### ✅ Autenticación y Control de Acceso
+#### Autenticación y Control de Acceso
 - Modelo de Usuario personalizado con 3 roles (Admin, Analista, Auditor)
 - Endpoints: login, logout, me (usuario actual), roles
 - RBAC con métodos de permisos en el modelo
 - Usuarios demo pre-configurados
 
-#### ✅ Catálogos Base
+#### Catálogos Base
 - **Issuer**: CRUD completo + filtros + acciones
 - **Instrument**: CRUD completo + filtros + acciones + agrupación por tipo
 - Ambos con admin Django completamente configurado
 
-#### ✅ Calificaciones Tributarias (TaxRating)
+#### Calificaciones Tributarias (TaxRating)
 - Modelo completo con 10 ratings (AAA a D)
 - CRUD con validaciones de negocio
 - Filtros avanzados: por fecha, por issuer, últimas N
 - Acción para cambiar estado
 - Índices de BD para optimizar consultas
 
-#### ✅ Sistema de Auditoría
+#### Sistema de Auditoría
 - Modelo AuditLog con trazabilidad completa
 - Signals automáticos para registrar cambios (CREATE/UPDATE/DELETE)
 - Captura de IP, User-Agent, usuario responsable
@@ -56,7 +48,7 @@ Frontend React completo con todas las páginas funcionales (Dashboard, CRUD, Rep
 - Filtros: por usuario, acción, modelo
 - Acción: resumen estadístico
 
-#### ✅ Configuración y Tooling (Sprint 1)
+#### Configuración y Tooling (Sprint 1)
 - Django REST Framework + CORS configurados
 - Migraciones completas (5 aplicadas)
 - requirements.txt actualizado con nuevas dependencias
@@ -66,11 +58,11 @@ Frontend React completo con todas las páginas funcionales (Dashboard, CRUD, Rep
 
 ---
 
-## 🎯 Sprint 2: Completado ✅
+## Sprint 2 (Resumen)
 
-### Carga Masiva de Datos
+### Carga Masiva
 
-#### ✅ Modelos
+#### Modelos
 - **BulkUpload**: Gestiona cargas de archivos CSV/XLSX
   - Campos: archivo, tipo, usuario, estado, totales, resumen de errores
   - Estados: PENDIENTE, PROCESANDO, COMPLETADO, ERROR
@@ -79,14 +71,14 @@ Frontend React completo con todas las páginas funcionales (Dashboard, CRUD, Rep
   - Campos: bulk_upload, numero_fila, estado, mensaje_error, datos
   - Estados: OK, ERROR
 
-#### ✅ Backend y Utilidades
+#### Backend y Utilidades
 - Parser CSV con validaciones (`utils.py`)
 - Parser XLSX con validaciones (`utils.py`)
 - Validador de filas: `validate_tax_rating_row()`
 - Procesador completo: `process_bulk_upload_file()`
 - Manejo de errores por fila sin detener el proceso
 
-#### ✅ API Endpoints (BulkUploadViewSet)
+#### Endpoints BulkUpload
 - `POST /api/v1/calificacionfiscal/bulk-uploads/` - Subir archivo
 - `GET /api/v1/calificacionfiscal/bulk-uploads/` - Listar cargas
 - `GET /api/v1/calificacionfiscal/bulk-uploads/{id}/` - Detalle de carga
@@ -94,7 +86,7 @@ Frontend React completo con todas las páginas funcionales (Dashboard, CRUD, Rep
 - `POST /api/v1/calificacionfiscal/bulk-uploads/{id}/procesar/` - Procesar carga
 - `GET /api/v1/calificacionfiscal/bulk-uploads/resumen/` - Resumen del usuario
 
-#### ✅ Comando Management
+#### Comando Management
 - `python manage.py process_uploads --id <id>` - Procesar carga específica
 - `python manage.py process_uploads --all` - Procesar todas pendientes
 
@@ -104,12 +96,12 @@ Frontend React completo con todas las páginas funcionales (Dashboard, CRUD, Rep
 
 ### Reportes y Exportaciones
 
-#### ✅ Módulo de Reportes (`reports.py`)
+#### Módulo `reports.py`
 - `generar_reporte_csv()`: Exporta TaxRatings a CSV con encoding UTF-8
 - `generar_reporte_pdf()`: Genera PDF con reportlab, incluye estadísticas y tabla
 - `obtener_estadisticas()`: Calcula stats por rating, outlook, top issuers/instruments
 
-#### ✅ API Endpoints (ReportsViewSet)
+#### Endpoints Reportes
 - `GET /api/v1/calificacionfiscal/reports/estadisticas/` - Stats generales (JSON)
   - Filtros: fecha_desde, fecha_hasta, issuer_id, instrument_id
 - `GET /api/v1/calificacionfiscal/reports/exportar_csv/` - Exporta a CSV
@@ -117,21 +109,21 @@ Frontend React completo con todas las páginas funcionales (Dashboard, CRUD, Rep
 - `GET /api/v1/calificacionfiscal/reports/exportar_pdf/` - Exporta a PDF
   - Filtros: fecha_desde, fecha_hasta, incluir_estadisticas
 
-#### ✅ Dependencias Instaladas
+#### Dependencias Sprint 2
 - openpyxl==3.1.5 (soporte XLSX)
 - reportlab==4.4.4 (generación PDF)
 - pillow==12.0.0 (imágenes en PDF)
 - et-xmlfile==2.0.0 (soporte XML de Excel)
 - charset-normalizer==3.4.4 (encoding)
 
-### Notas recientes y operaciones recomendadas
+### Notas Operativas
 
 - Las credenciales de la base de datos ahora se cargan desde `.env` usando `python-dotenv` (no incluya contraseñas en `settings.py`).
 - Para crear usuarios demo use: `python manage.py seed_users`.
 - Para crear el superusuario en entornos automatizados (CI o Docker) use variables de entorno `DJANGO_SUPERUSER_*` y secretos en GitHub Actions.
 - Si tu contraseña fue expuesta en el historial de Git, rota la credencial y actualiza `.env` en todos los entornos.
 
-#### ✅ Documentación
+#### Documentación
 - README.md: guía completa de instalación y uso
 - SPRINT1_SUMMARY.md: resumen técnico del Sprint 1
 - DEVELOPER_SETUP.md: guía para nuevos desarrolladores
@@ -141,7 +133,7 @@ Frontend React completo con todas las páginas funcionales (Dashboard, CRUD, Rep
 
 ---
 
-## 🗂️ Estructura del Código
+## Estructura Principal
 
 ```
 proyecto-integrado-nuam/
@@ -197,24 +189,23 @@ proyecto-integrado-nuam/
 
 ---
 
-## 📈 Métricas del Sprint 1
+## Métricas Acumuladas
 
 | Métrica | Valor |
 |---------|-------|
-| Modelos Creados | 6 |
-| Endpoints Implementados | 30+ |
-| Líneas de Código Backend | ~1,200 |
-| Tests Unitarios | Pendiente (Sprint 4) |
-| Cobertura Requerida | 75% |
-| Documentación | 100% |
-| Migraciones | 4 nuevas |
-| Duración | 2 días |
+| Modelos | 8 |
+| Endpoints | 45+ |
+| Líneas Backend | ~3,500 |
+| Líneas Frontend | ~4,500 |
+| Líneas Estilos | ~1,500 |
+| Migraciones | 5 |
+| Tests iniciales | Backend filtros auditoría + Vitest base |
 
 ---
 
-## 🚀 API Endpoints Disponibles
+## Endpoints Principales (Agrupados)
 
-### Autenticación
+### Autenticación / Roles
 - `POST /api/v1/auth/login` - Login
 - `POST /api/v1/auth/logout` - Logout
 - `GET /api/v1/auth/me` - Usuario actual
@@ -222,7 +213,7 @@ proyecto-integrado-nuam/
 ### Roles
 - `GET /api/v1/roles` - Listado de roles
 
-### Issuers (Emisores)
+### Issuers
 - `GET /api/v1/issuers` - Listado con paginación
 - `POST /api/v1/issuers` - Crear
 - `GET /api/v1/issuers/{id}` - Obtener
@@ -230,7 +221,7 @@ proyecto-integrado-nuam/
 - `DELETE /api/v1/issuers/{id}` - Eliminar
 - `GET /api/v1/issuers/activos/` - Solo activos
 
-### Instruments (Instrumentos)
+### Instruments
 - `GET /api/v1/instruments` - Listado
 - `POST /api/v1/instruments` - Crear
 - `GET /api/v1/instruments/{id}` - Obtener
@@ -239,7 +230,7 @@ proyecto-integrado-nuam/
 - `GET /api/v1/instruments/activos/` - Solo activos
 - `GET /api/v1/instruments/por-tipo/` - Agrupados por tipo
 
-### TaxRatings (Calificaciones)
+### TaxRatings
 - `GET /api/v1/tax-ratings` - Listado paginado
 - `POST /api/v1/tax-ratings` - Crear
 - `GET /api/v1/tax-ratings/{id}` - Obtener
@@ -263,7 +254,7 @@ proyecto-integrado-nuam/
 
 ---
 
-## 📋 Criterios de Aceptación (Sprint 1)
+## Criterios Clave Cumplidos
 
 | Criterio | Estado | Notas |
 |----------|--------|-------|
@@ -279,7 +270,12 @@ proyecto-integrado-nuam/
 
 ---
 
-## 🔄 Próximos Pasos (Sprint 2)
+## Próximos Pasos (Sprint 4)
+1. Ampliar suite de tests (servicios frontend, serializers backend).
+2. Dockerización + docker-compose.
+3. CI/CD (lint, tests, build, deploy staging).
+4. Optimización rendimiento (caché ligera, lazy loading, skeletons).
+5. Toasts y feedback de errores consistente.
 
 ### Carga Masiva
 - [ ] Modelo BulkUpload + BulkUploadItem
@@ -302,7 +298,7 @@ proyecto-integrado-nuam/
 
 ---
 
-## 🧪 Testing (Sprint 4)
+## Objetivos Testing Sprint 4
 
 ### Unitarias
 - [ ] Models (validaciones)
@@ -325,7 +321,7 @@ proyecto-integrado-nuam/
 
 ---
 
-## 🎨 Frontend (Sprint 3)
+## Estado Frontend (Sprint 3)
 
 ### Estructura Base
 - [ ] Login page
@@ -352,7 +348,7 @@ proyecto-integrado-nuam/
 
 ---
 
-## 🐳 DevOps (Sprint 4)
+## Meta DevOps Sprint 4
 
 ### Docker
 - [ ] Dockerfile Django
@@ -374,7 +370,7 @@ proyecto-integrado-nuam/
 
 ---
 
-## 📖 Documentación Disponible
+## Documentación Clave
 
 | Archivo | Propósito |
 |---------|-----------|
@@ -388,7 +384,7 @@ proyecto-integrado-nuam/
 
 ---
 
-## 🎓 Cómo Empezar
+## Inicio Rápido
 
 ### Para nuevos desarrolladores
 1. Lee `DEVELOPER_SETUP.md`
@@ -412,7 +408,7 @@ proyecto-integrado-nuam/
 
 ---
 
-## 📞 Contacto y Soporte
+## Contacto
 
 - **Repositorio:** https://github.com/Gengardeth/proyecto-integrado-nuam
 - **Rama Actual:** el-Gonzalo-probando-weas
@@ -420,7 +416,7 @@ proyecto-integrado-nuam/
 
 ---
 
-## ✨ Puntos Destacados del Sprint 1
+## Puntos Destacados Globales
 
 ### Seguridad
 - ✅ RBAC con 3 roles funcionales
@@ -452,7 +448,7 @@ proyecto-integrado-nuam/
 
 ---
 
-## 🎉 Conclusión
+## Conclusión
 
 **El backend MVP de NUAM está completamente funcional y listo para producción** (con ajustes menores de seguridad en Sprint 4).
 
@@ -468,7 +464,7 @@ Todas las features críticas de Sprint 1 están implementadas:
 
 ---
 
-**Fecha:** 12 de noviembre de 2025  
-**Sprint:** 1 (Completado)  
-**Próximo:** Sprint 2  
-**Duración Estimada Total:** 8 semanas (4 sprints x 2 semanas)
+**Fecha:** 17 de noviembre de 2025  
+**Sprints Completados:** 1–3  
+**Próximo:** Sprint 4 (Testing + DevOps)  
+**Duración Estimada Total:** 8 semanas (4 sprints)

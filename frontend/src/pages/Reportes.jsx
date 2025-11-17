@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { reportsAPI } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import reportsService from '../services/reports';
+import ratingsService from '../services/ratings';
+import issuersService from '../services/issuers';
+import instrumentsService from '../services/instruments';
 import { formatDate } from '../utils/dateFormat';
 import { RATING_STATUS_LABELS } from '../utils/constants';
 import '../styles/Reportes.css';
@@ -8,11 +11,31 @@ const Reportes = () => {
   const [filters, setFilters] = useState({
     fecha_desde: '',
     fecha_hasta: '',
-    estado: '',
-    issuer: ''
+    status: '',
+    issuer_id: '',
+    instrument_id: ''
   });
   const [loading, setLoading] = useState(false);
-  const [reportData, setReportData] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [rawData, setRawData] = useState([]);
+  const [issuers, setIssuers] = useState([]);
+  const [instruments, setInstruments] = useState([]);
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [iss, inst] = await Promise.all([
+          issuersService.list(),
+          instrumentsService.list(),
+        ]);
+        setIssuers(iss.data.results || iss.data);
+        setInstruments(inst.data.results || inst.data);
+      } catch (e) {
+        console.error('Error cargando listas base:', e);
+      }
+    })();
+  }, []);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -22,34 +45,40 @@ const Reportes = () => {
   const handleGenerate = async () => {
     try {
       setLoading(true);
-      const response = await reportsAPI.generate(filters);
-      setReportData(response.data);
+      // Estadísticas agregadas
+      const statsResp = await reportsService.estadisticas(filters);
+      setStats(statsResp.data);
+      // Recuperar datos sin paginar usando ratingsService con filtros básicos (solo para demostración)
+      const listResp = await ratingsService.list({ page_size: 200, ...filters });
+      const lista = listResp.data.results || listResp.data;
+      setRawData(lista);
     } catch (err) {
-      console.error('Error generating report:', err);
+      console.error('Error generando reporte:', err);
       alert('Error al generar el reporte');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleExport = async (format) => {
+  const handleExport = async (tipo) => {
     try {
-      setLoading(true);
-      const response = await reportsAPI.export({...filters, format});
-      
-      // Crear enlace de descarga
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `reporte_${Date.now()}.${format}`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      setExporting(true);
+      const servicio = tipo === 'csv' ? reportsService.exportCSV : reportsService.exportPDF;
+      const resp = await servicio(filters);
+      const blob = new Blob([resp.data], { type: tipo === 'csv' ? 'text/csv' : 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte_${Date.now()}.${tipo}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Error exporting report:', err);
-      alert('Error al exportar el reporte');
+      console.error('Error exportando reporte:', err);
+      alert('No se pudo exportar');
     } finally {
-      setLoading(false);
+      setExporting(false);
     }
   };
 
@@ -88,11 +117,11 @@ const Reportes = () => {
           </div>
 
           <div className="filter-group">
-            <label htmlFor="estado">Estado</label>
+            <label htmlFor="status">Estado</label>
             <select
-              id="estado"
-              name="estado"
-              value={filters.estado}
+              id="status"
+              name="status"
+              value={filters.status}
               onChange={handleFilterChange}
               className="filter-select"
             >
@@ -102,25 +131,42 @@ const Reportes = () => {
               ))}
             </select>
           </div>
-
           <div className="filter-group">
-            <label htmlFor="issuer">Issuer</label>
-            <input
-              type="text"
-              id="issuer"
-              name="issuer"
-              value={filters.issuer}
+            <label htmlFor="issuer_id">Issuer</label>
+            <select
+              id="issuer_id"
+              name="issuer_id"
+              value={filters.issuer_id}
               onChange={handleFilterChange}
-              placeholder="Buscar issuer..."
-              className="filter-input"
-            />
+              className="filter-select"
+            >
+              <option value="">Todos</option>
+              {issuers.map(i => (
+                <option key={i.id} value={i.id}>{i.nombre}</option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label htmlFor="instrument_id">Instrumento</label>
+            <select
+              id="instrument_id"
+              name="instrument_id"
+              value={filters.instrument_id}
+              onChange={handleFilterChange}
+              className="filter-select"
+            >
+              <option value="">Todos</option>
+              {instruments.map(inst => (
+                <option key={inst.id} value={inst.id}>{inst.nombre}</option>
+              ))}
+            </select>
           </div>
         </div>
 
         <div className="filter-actions">
           <button
             className="btn-secondary"
-            onClick={() => setFilters({ fecha_desde: '', fecha_hasta: '', estado: '', issuer: '' })}
+            onClick={() => setFilters({ fecha_desde: '', fecha_hasta: '', status: '', issuer_id: '', instrument_id: '' })}
           >
             Limpiar Filtros
           </button>
@@ -134,7 +180,7 @@ const Reportes = () => {
         </div>
       </div>
 
-      {reportData && (
+      {stats && (
         <div className="report-results-card">
           <div className="results-header">
             <h2>Resultados</h2>
@@ -142,14 +188,14 @@ const Reportes = () => {
               <button
                 className="btn-export"
                 onClick={() => handleExport('csv')}
-                disabled={loading}
+                disabled={exporting}
               >
                 📄 Exportar CSV
               </button>
               <button
                 className="btn-export"
                 onClick={() => handleExport('pdf')}
-                disabled={loading}
+                disabled={exporting}
               >
                 📕 Exportar PDF
               </button>
@@ -159,19 +205,50 @@ const Reportes = () => {
           <div className="report-stats">
             <div className="stat-card">
               <span className="stat-label">Total Calificaciones</span>
-              <span className="stat-value">{reportData.total || 0}</span>
+              <span className="stat-value">{stats.total || stats.total_calificaciones || 0}</span>
             </div>
             <div className="stat-card">
               <span className="stat-label">Vigentes</span>
-              <span className="stat-value">{reportData.vigentes || 0}</span>
+              <span className="stat-value">{stats.vigentes || 0}</span>
             </div>
             <div className="stat-card">
-              <span className="stat-label">Vencidos</span>
-              <span className="stat-value">{reportData.vencidos || 0}</span>
+              <span className="stat-label">Por Rating</span>
+              <span className="stat-value-mini">{(stats.por_rating || []).length}</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Por Estado</span>
+              <span className="stat-value-mini">{(stats.por_status || []).length}</span>
             </div>
           </div>
 
-          {reportData.calificaciones && reportData.calificaciones.length > 0 && (
+          <div className="breakdown-grid">
+            <div className="breakdown-section">
+              <h3>Distribución Rating</h3>
+              <ul className="breakdown-list">
+                {(stats.por_rating || []).map(r => (
+                  <li key={r.rating}>{r.rating}: {r.count}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="breakdown-section">
+              <h3>Distribución Estado</h3>
+              <ul className="breakdown-list">
+                {(stats.por_status || []).map(s => (
+                  <li key={s.status}>{s.status}: {s.count}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="breakdown-section">
+              <h3>Nivel de Riesgo</h3>
+              <ul className="breakdown-list">
+                {(stats.por_risk_level || []).map(rl => (
+                  <li key={rl.risk_level}>{rl.risk_level}: {rl.count}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {rawData && rawData.length > 0 && (
             <div className="report-table-container">
               <table className="report-table">
                 <thead>
@@ -180,21 +257,23 @@ const Reportes = () => {
                     <th>Instrumento</th>
                     <th>Rating</th>
                     <th>Estado</th>
-                    <th>Fecha</th>
+                    <th>Válido desde</th>
+                    <th>Válido hasta</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {reportData.calificaciones.map((calif, index) => (
-                    <tr key={index}>
-                      <td>{calif.issuer_name}</td>
-                      <td>{calif.instrument_name}</td>
+                  {rawData.map((calif) => (
+                    <tr key={calif.id}>
+                      <td>{calif.issuer_nombre || calif.issuer}</td>
+                      <td>{calif.instrument_nombre || calif.instrument}</td>
                       <td><span className="rating-badge">{calif.rating}</span></td>
                       <td>
-                        <span className={`status-badge status-${calif.estado?.toLowerCase()}`}>
-                          {RATING_STATUS_LABELS[calif.estado]}
+                        <span className={`status-badge status-${calif.status?.toLowerCase()}`}>
+                          {RATING_STATUS_LABELS[calif.status] || calif.status}
                         </span>
                       </td>
-                      <td>{formatDate(calif.fecha_emision)}</td>
+                      <td>{formatDate(calif.valid_from)}</td>
+                      <td>{formatDate(calif.valid_to)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -204,7 +283,7 @@ const Reportes = () => {
         </div>
       )}
 
-      {!reportData && (
+      {!stats && (
         <div className="empty-state-card">
           <div className="empty-icon">📊</div>
           <h3>No hay reportes generados</h3>

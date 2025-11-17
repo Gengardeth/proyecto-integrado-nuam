@@ -141,10 +141,10 @@ El Dashboard consume los siguientes endpoints del backend:
 
 ```javascript
 // Calificaciones
-GET /api/v1/calificacionfiscal/tax-ratings/
-  ?page_size=5&ordering=-fecha_rating
+GET /api/v1/tax-ratings/
+  ?page_size=5&ordering=-valid_from
 
-GET /api/v1/calificacionfiscal/tax-ratings/
+GET /api/v1/tax-ratings/
   ?page_size=1000
 
 // Auditoría (solo Admin/Auditor)
@@ -173,7 +173,8 @@ GET /api/v1/cuentas/audit-logs/
 ### El Dashboard no muestra datos
 1. Verifica que el backend esté corriendo en http://localhost:8000
 2. Verifica que tengas calificaciones creadas en el sistema
-3. Abre la consola del navegador para ver errores de API
+3. Confirma que `VITE_API_URL` apunta a `http://localhost:8000/api/v1`
+4. Abre la consola del navegador para ver errores de API
 
 ### Error de CORS
 Si ves errores de CORS, verifica que en `Nuam/settings.py` tengas:

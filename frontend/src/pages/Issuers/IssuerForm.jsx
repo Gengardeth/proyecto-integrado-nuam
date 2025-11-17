@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { issuersAPI } from '../../services/api';
 import '../../styles/SharedCRUD.css';
@@ -19,13 +19,7 @@ const IssuerForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (isEdit) {
-      fetchIssuer();
-    }
-  }, [id]);
-
-  const fetchIssuer = async () => {
+  const fetchIssuer = useCallback(async () => {
     try {
       setLoading(true);
       const response = await issuersAPI.get(id);
@@ -36,7 +30,13 @@ const IssuerForm = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (isEdit) {
+      fetchIssuer();
+    }
+  }, [isEdit, fetchIssuer]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

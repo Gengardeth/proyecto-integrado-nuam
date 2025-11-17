@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { taxRatingsAPI } from '../../services/api';
+import ratingsService from '../../services/ratings';
 import { formatDate } from '../../utils/dateFormat';
 import { RATING_STATUS_LABELS } from '../../utils/constants';
 import '../../styles/Calificaciones.css';
@@ -12,7 +12,7 @@ const CalificacionesList = () => {
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
-    estado: '',
+    status: '',
     fecha_desde: '',
     fecha_hasta: ''
   });
@@ -22,25 +22,30 @@ const CalificacionesList = () => {
     total: 0
   });
 
-  useEffect(() => {
-    fetchCalificaciones();
-  }, [pagination.page, filters]);
-
-  const fetchCalificaciones = async () => {
+  const fetchCalificaciones = useCallback(async () => {
     try {
       setLoading(true);
-      const params = {
-        page: pagination.page,
-        page_size: pagination.pageSize,
-        ...filters
-      };
-      
-      const response = await taxRatingsAPI.list(params);
-      setCalificaciones(response.data.results || response.data);
-      setPagination(prev => ({
-        ...prev,
-        total: response.data.count || response.data.length
-      }));
+      const { fecha_desde, fecha_hasta, ...rest } = filters;
+      let response;
+
+      // Si hay filtros de fechas, usar el endpoint específico
+      if (fecha_desde || fecha_hasta) {
+        response = await ratingsService.porRangoFecha(fecha_desde, fecha_hasta);
+        setCalificaciones(response.data);
+        setPagination(prev => ({ ...prev, total: response.data.length }));
+      } else {
+        const params = {
+          page: pagination.page,
+          page_size: pagination.pageSize,
+          ...rest,
+        };
+        response = await ratingsService.list(params);
+        setCalificaciones(response.data.results || response.data);
+        setPagination(prev => ({
+          ...prev,
+          total: response.data.count || response.data.length
+        }));
+      }
       setError(null);
     } catch (err) {
       console.error('Error fetching calificaciones:', err);
@@ -48,7 +53,11 @@ const CalificacionesList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, pagination.page, pagination.pageSize]);
+
+  useEffect(() => {
+    fetchCalificaciones();
+  }, [fetchCalificaciones]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -60,7 +69,7 @@ const CalificacionesList = () => {
     if (!window.confirm('¿Estás seguro de eliminar esta calificación?')) return;
     
     try {
-      await taxRatingsAPI.delete(id);
+      await ratingsService.remove(id);
       fetchCalificaciones();
     } catch (err) {
       console.error('Error deleting calificacion:', err);
@@ -112,8 +121,8 @@ const CalificacionesList = () => {
         
         <div className="filter-group">
           <select
-            name="estado"
-            value={filters.estado}
+            name="status"
+            value={filters.status}
             onChange={handleFilterChange}
             className="filter-select"
           >
@@ -149,7 +158,7 @@ const CalificacionesList = () => {
         <button 
           className="btn-secondary"
           onClick={() => {
-            setFilters({ search: '', estado: '', fecha_desde: '', fecha_hasta: '' });
+            setFilters({ search: '', status: '', fecha_desde: '', fecha_hasta: '' });
             setPagination(prev => ({ ...prev, page: 1 }));
           }}
         >
@@ -168,8 +177,8 @@ const CalificacionesList = () => {
               <th>Instrumento</th>
               <th>Rating</th>
               <th>Estado</th>
-              <th>Fecha Emisión</th>
-              <th>Vigencia</th>
+              <th>Válido desde</th>
+              <th>Válido hasta</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -183,18 +192,18 @@ const CalificacionesList = () => {
             ) : (
               calificaciones.map((calif) => (
                 <tr key={calif.id}>
-                  <td>{calif.issuer_name || calif.issuer}</td>
-                  <td>{calif.instrument_name || calif.instrument}</td>
+                  <td>{calif.issuer_nombre || calif.issuer}</td>
+                  <td>{calif.instrument_nombre || calif.instrument}</td>
                   <td>
                     <span className="rating-badge">{calif.rating}</span>
                   </td>
                   <td>
-                    <span className={`status-badge status-${calif.estado?.toLowerCase()}`}>
-                      {RATING_STATUS_LABELS[calif.estado] || calif.estado}
+                    <span className={`status-badge status-${calif.status?.toLowerCase()}`}>
+                      {RATING_STATUS_LABELS[calif.status] || calif.status}
                     </span>
                   </td>
-                  <td>{formatDate(calif.fecha_emision)}</td>
-                  <td>{formatDate(calif.fecha_vigencia)}</td>
+                  <td>{formatDate(calif.valid_from)}</td>
+                  <td>{formatDate(calif.valid_to)}</td>
                   <td className="actions-cell">
                     <button
                       className="btn-action btn-view"

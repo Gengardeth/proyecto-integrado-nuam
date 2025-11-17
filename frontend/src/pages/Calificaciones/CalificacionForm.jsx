@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { taxRatingsAPI, issuersAPI, instrumentsAPI } from '../../services/api';
+import ratingsService from '../../services/ratings';
+import issuersService from '../../services/issuers';
+import instrumentsService from '../../services/instruments';
 import { RATING_STATUS_LABELS } from '../../utils/constants';
 import '../../styles/Calificaciones.css';
 
@@ -13,10 +15,10 @@ const CalificacionForm = () => {
     issuer: '',
     instrument: '',
     rating: '',
-    estado: 'VIGENTE',
-    fecha_emision: '',
-    fecha_vigencia: '',
-    notas: ''
+    status: 'VIGENTE',
+    valid_from: '',
+    valid_to: '',
+    comments: ''
   });
 
   const [issuers, setIssuers] = useState([]);
@@ -25,28 +27,44 @@ const CalificacionForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const fetchCalificacion = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await ratingsService.get(id);
+      const data = response.data;
+      setFormData({
+        issuer: data.issuer,
+        instrument: data.instrument,
+        rating: data.rating,
+        status: data.status,
+        valid_from: data.valid_from,
+        valid_to: data.valid_to,
+        comments: data.comments || ''
+      });
+    } catch (err) {
+      console.error('Error fetching calificacion:', err);
+      setError('Error al cargar la calificación');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     fetchIssuers();
     fetchInstruments();
     if (isEdit) {
       fetchCalificacion();
     }
-  }, [id]);
+  }, [fetchCalificacion, isEdit]);
 
   useEffect(() => {
-    if (formData.issuer) {
-      const filtered = instruments.filter(
-        inst => inst.issuer === parseInt(formData.issuer)
-      );
-      setFilteredInstruments(filtered);
-    } else {
-      setFilteredInstruments(instruments);
-    }
-  }, [formData.issuer, instruments]);
+    // Sin relación directa entre Instrument e Issuer, mostramos todos
+    setFilteredInstruments(instruments);
+  }, [instruments]);
 
   const fetchIssuers = async () => {
     try {
-      const response = await issuersAPI.listActive();
+      const response = await issuersService.listActive();
       setIssuers(response.data);
     } catch (err) {
       console.error('Error fetching issuers:', err);
@@ -55,34 +73,14 @@ const CalificacionForm = () => {
 
   const fetchInstruments = async () => {
     try {
-      const response = await instrumentsAPI.listActive();
+      const response = await instrumentsService.listActive();
       setInstruments(response.data);
     } catch (err) {
       console.error('Error fetching instruments:', err);
     }
   };
 
-  const fetchCalificacion = async () => {
-    try {
-      setLoading(true);
-      const response = await taxRatingsAPI.get(id);
-      const data = response.data;
-      setFormData({
-        issuer: data.issuer,
-        instrument: data.instrument,
-        rating: data.rating,
-        estado: data.estado,
-        fecha_emision: data.fecha_emision,
-        fecha_vigencia: data.fecha_vigencia,
-        notas: data.notas || ''
-      });
-    } catch (err) {
-      console.error('Error fetching calificacion:', err);
-      setError('Error al cargar la calificación');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // fetchCalificacion definido arriba con useCallback
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -96,9 +94,9 @@ const CalificacionForm = () => {
 
     try {
       if (isEdit) {
-        await taxRatingsAPI.update(id, formData);
+        await ratingsService.update(id, formData);
       } else {
-        await taxRatingsAPI.create(formData);
+        await ratingsService.create(formData);
       }
       navigate('/calificaciones');
     } catch (err) {
@@ -161,7 +159,6 @@ const CalificacionForm = () => {
               onChange={handleChange}
               required
               className="form-control"
-              disabled={!formData.issuer}
             >
               <option value="">Seleccionar instrumento...</option>
               {filteredInstruments.map(inst => (
@@ -188,11 +185,11 @@ const CalificacionForm = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="estado">Estado *</label>
+            <label htmlFor="status">Estado *</label>
             <select
-              id="estado"
-              name="estado"
-              value={formData.estado}
+              id="status"
+              name="status"
+              value={formData.status}
               onChange={handleChange}
               required
               className="form-control"
@@ -204,12 +201,12 @@ const CalificacionForm = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="fecha_emision">Fecha de Emisión *</label>
+            <label htmlFor="valid_from">Válido desde *</label>
             <input
               type="date"
-              id="fecha_emision"
-              name="fecha_emision"
-              value={formData.fecha_emision}
+              id="valid_from"
+              name="valid_from"
+              value={formData.valid_from}
               onChange={handleChange}
               required
               className="form-control"
@@ -217,12 +214,12 @@ const CalificacionForm = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="fecha_vigencia">Fecha de Vigencia *</label>
+            <label htmlFor="valid_to">Válido hasta *</label>
             <input
               type="date"
-              id="fecha_vigencia"
-              name="fecha_vigencia"
-              value={formData.fecha_vigencia}
+              id="valid_to"
+              name="valid_to"
+              value={formData.valid_to}
               onChange={handleChange}
               required
               className="form-control"
@@ -231,11 +228,11 @@ const CalificacionForm = () => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="notas">Notas</label>
+          <label htmlFor="comments">Comentarios</label>
           <textarea
-            id="notas"
-            name="notas"
-            value={formData.notas}
+            id="comments"
+            name="comments"
+            value={formData.comments}
             onChange={handleChange}
             rows={4}
             placeholder="Notas adicionales sobre la calificación..."

@@ -191,6 +191,52 @@
   font-weight: 700;
   color: #1a202c;
 }
+.stat-value-mini {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin: 1.5rem 0 1.75rem;
+}
+
+.breakdown-section {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem 1rem 0.75rem;
+}
+.breakdown-section h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.75rem;
+  font-weight: 600;
+  color: #2d3748;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.breakdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #4a5568;
+}
+.breakdown-list li {
+  display: flex;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-weight: 500;
+}
 
 .report-table-container {
   overflow-x: auto;
