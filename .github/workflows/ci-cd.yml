@@ -1,0 +1,180 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, el-Gonzalo-probando-weas ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.13'
+  NODE_VERSION: '20'
+
+jobs:
+  # Job 1: Tests y Lint Backend
+  backend-quality:
+    name: Backend Tests & Lint
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 black isort
+      
+      - name: Lint con flake8
+        run: |
+          # Detener en errores de sintaxis o nombres no definidos
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Advertencias (no falla el build)
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      
+      - name: Verificar formato con black
+        run: |
+          black --check --diff .
+        continue-on-error: true
+      
+      - name: Verificar imports con isort
+        run: |
+          isort --check-only --diff .
+        continue-on-error: true
+      
+      - name: Ejecutar tests Django
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          SECRET_KEY: test-secret-key-for-ci
+          DEBUG: False
+        run: |
+          python manage.py migrate --noinput
+          python manage.py test cuentas parametros --verbosity=2
+      
+      - name: Django system check
+        run: |
+          python manage.py check
+
+  # Job 2: Tests y Lint Frontend
+  frontend-quality:
+    name: Frontend Tests & Lint
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+      
+      - name: Instalar dependencias
+        run: npm ci
+      
+      - name: Lint con ESLint
+        run: npm run lint
+      
+      - name: Ejecutar tests Vitest
+        run: npm run test
+      
+      - name: Build de producción
+        run: npm run build
+      
+      - name: Verificar tamaño del build
+        run: |
+          echo "Tamaño del build:"
+          du -sh dist/
+
+  # Job 3: Build Docker Images (solo en push a main/develop)
+  docker-build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [backend-quality, frontend-quality]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: nuam-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: nuam-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Job 4: Análisis de Seguridad
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Instalar safety
+        run: pip install safety
+      
+      - name: Scan de vulnerabilidades en dependencias Python
+        run: safety check --file requirements.txt --json
+        continue-on-error: true
+      
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: npm audit
+        working-directory: ./frontend
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
