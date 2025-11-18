@@ -109,9 +109,14 @@ CORS_ALLOW_HEADERS = [
 # CSRF settings para API
 CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173']
 CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = None  # Permite cookies cross-origin
+CSRF_COOKIE_SECURE = False  # True solo en producción con HTTPS
+
+# Session settings para cross-origin
+SESSION_COOKIE_SAMESITE = None  # Permite cookies cross-origin
 SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # True solo en producción con HTTPS
+SESSION_COOKIE_AGE = 86400  # 24 horas
 
 ROOT_URLCONF = 'Nuam.urls'
 

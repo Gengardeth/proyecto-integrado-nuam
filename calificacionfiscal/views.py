@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FormParser
+from cuentas.authentication import CsrfExemptSessionAuthentication
 from .models import CalificacionTributaria, TaxRating, BulkUpload, BulkUploadItem
 from .serializers import (
     CalificacionTributariaSerializer, TaxRatingSerializer, TaxRatingListSerializer,
@@ -32,6 +33,7 @@ class TaxRatingViewSet(viewsets.ModelViewSet):
     Permisos según rol: ADMIN (full), ANALISTA (CRUD), AUDITOR (solo lectura).
     """
     queryset = TaxRating.objects.select_related('issuer', 'instrument', 'analista').all()
+    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [permissions.IsAuthenticated, TaxRatingPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['issuer__nombre', 'issuer__rut', 'instrument__nombre', 'instrument__codigo', 'rating', 'status']
@@ -206,6 +208,7 @@ class BulkUploadViewSet(viewsets.ModelViewSet):
     Permisos: ADMIN y ANALISTA pueden subir, AUDITOR solo lectura.
     """
     queryset = BulkUpload.objects.select_related('usuario').all()
+    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [permissions.IsAuthenticated, BulkUploadPermission]
     parser_classes = [MultiPartParser, FormParser]
     pagination_class = TaxRatingPagination
@@ -335,6 +338,7 @@ class ReportsViewSet(viewsets.ViewSet):
     Permite exportar en formato CSV y PDF.
     Permisos: todos los roles pueden generar reportes.
     """
+    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [permissions.IsAuthenticated, ReportPermission]
     
     @action(detail=False, methods=['get'])
@@ -475,6 +479,7 @@ class ReportsViewSet(viewsets.ViewSet):
     ViewSet para generar reportes y estadísticas de TaxRatings.
     Permite exportar en formato CSV y PDF.
     """
+    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     
     @action(detail=False, methods=['get'])

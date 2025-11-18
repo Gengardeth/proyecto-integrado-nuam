@@ -2,6 +2,7 @@ from rest_framework import viewsets, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from cuentas.authentication import CsrfExemptSessionAuthentication
 from .models import Issuer, Instrument
 from .serializers import IssuerSerializer, InstrumentSerializer
 
@@ -12,6 +13,7 @@ class IssuersViewSet(viewsets.ModelViewSet):
     """
     queryset = Issuer.objects.all()
     serializer_class = IssuerSerializer
+    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['codigo', 'nombre', 'razon_social', 'rut']
@@ -33,6 +35,7 @@ class InstrumentsViewSet(viewsets.ModelViewSet):
     """
     queryset = Instrument.objects.all()
     serializer_class = InstrumentSerializer
+    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['codigo', 'nombre', 'tipo']

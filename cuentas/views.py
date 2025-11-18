@@ -47,10 +47,26 @@ class LoginView(APIView):
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
             
-            return Response({
+            # Debug: verificar sesión
+            print(f"DEBUG Login: Session Key = {request.session.session_key}")
+            print(f"DEBUG Login: User authenticated = {request.user.is_authenticated}")
+            
+            response = Response({
                 'detail': 'Login exitoso',
                 'user': UsuarioProfileSerializer(user).data
             })
+            
+            # Asegurar que la cookie de sesión se envíe
+            response.set_cookie(
+                key='sessionid',
+                value=request.session.session_key,
+                max_age=86400,  # 24 horas
+                httponly=True,
+                samesite=None,
+                secure=False  # True en producción con HTTPS
+            )
+            
+            return response
         
         return Response(
             {'detail': 'Credenciales inválidas'},
@@ -93,6 +109,12 @@ class MeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
+        # Debug: verificar autenticación
+        print(f"DEBUG Me: User = {request.user}")
+        print(f"DEBUG Me: Authenticated = {request.user.is_authenticated}")
+        print(f"DEBUG Me: Session Key = {request.session.session_key}")
+        print(f"DEBUG Me: Cookies = {request.COOKIES}")
+        
         serializer = UsuarioProfileSerializer(request.user)
         return Response(serializer.data)
     
@@ -129,6 +151,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     Solo ADMIN puede gestionar usuarios.
     """
     queryset = Usuario.objects.all().order_by('-date_joined')
+    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = UsuarioPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -260,6 +283,7 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     ANALISTA solo ve sus propios logs.
     """
     queryset = AuditLog.objects.all().select_related('usuario')
+    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = AuditLogPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
