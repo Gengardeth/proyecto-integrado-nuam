@@ -73,7 +73,7 @@ def validate_tax_rating_row(row_data):
     errores = []
     
     # Campos requeridos
-    required_fields = ['issuer_codigo', 'instrument_codigo', 'rating', 'fecha_rating']
+    required_fields = ['issuer_codigo', 'instrument_codigo', 'rating', 'valid_from']
     for field in required_fields:
         if not row_data.get(field):
             errores.append(f"Campo requerido '{field}' faltante o vacío")
@@ -98,17 +98,34 @@ def validate_tax_rating_row(row_data):
     if row_data['rating'] not in valid_ratings:
         errores.append(f"Rating '{row_data['rating']}' no es válido. Opciones: {', '.join(valid_ratings)}")
     
-    # Validar formato de fecha
+    # Validar formato de fechas (valid_from requerido, valid_to opcional)
     try:
-        datetime.strptime(str(row_data['fecha_rating']), '%Y-%m-%d')
+        datetime.strptime(str(row_data['valid_from']), '%Y-%m-%d')
     except ValueError:
-        errores.append(f"Formato de fecha_rating inválido. Use YYYY-MM-DD")
-    
-    # Validar outlook (opcional)
-    if row_data.get('outlook'):
-        valid_outlooks = ['POSITIVO', 'ESTABLE', 'NEGATIVO']
-        if row_data['outlook'] not in valid_outlooks:
-            errores.append(f"Outlook '{row_data['outlook']}' no es válido. Opciones: {', '.join(valid_outlooks)}")
+        errores.append("Formato de 'valid_from' inválido. Use YYYY-MM-DD")
+
+    if row_data.get('valid_to'):
+        try:
+            # Permitir vacío como no definido
+            if str(row_data['valid_to']).strip():
+                valid_from_dt = datetime.strptime(str(row_data['valid_from']), '%Y-%m-%d')
+                valid_to_dt = datetime.strptime(str(row_data['valid_to']), '%Y-%m-%d')
+                if valid_to_dt <= valid_from_dt:
+                    errores.append("'valid_to' debe ser posterior a 'valid_from'")
+        except ValueError:
+            errores.append("Formato de 'valid_to' inválido. Use YYYY-MM-DD")
+
+    # Validar status (opcional)
+    if row_data.get('status'):
+        valid_status = ['VIGENTE', 'VENCIDO', 'SUSPENDIDO', 'CANCELADO']
+        if row_data['status'] not in valid_status:
+            errores.append(f"Status '{row_data['status']}' no es válido. Opciones: {', '.join(valid_status)}")
+
+    # Validar risk_level (opcional)
+    if row_data.get('risk_level'):
+        valid_levels = ['MUY_BAJO', 'BAJO', 'MODERADO', 'ALTO', 'MUY_ALTO']
+        if row_data['risk_level'] not in valid_levels:
+            errores.append(f"Risk level '{row_data['risk_level']}' no es válido. Opciones: {', '.join(valid_levels)}")
     
     return len(errores) == 0, errores
 
@@ -155,16 +172,25 @@ def process_bulk_upload_file(bulk_upload):
                 issuer = Issuer.objects.get(codigo=row_data['issuer_codigo'])
                 instrument = Instrument.objects.get(codigo=row_data['instrument_codigo'])
                 
-                tax_rating = TaxRating.objects.create(
+                # Normalizar opcionales
+                valid_to_value = row_data.get('valid_to')
+                if valid_to_value is not None and str(valid_to_value).strip() == '':
+                    valid_to_value = None
+
+                status_value = row_data.get('status') or 'VIGENTE'
+                risk_level_value = row_data.get('risk_level') or 'MODERADO'
+                comments_value = row_data.get('comments') or row_data.get('notas', '') or ''
+
+                TaxRating.objects.create(
                     issuer=issuer,
                     instrument=instrument,
                     rating=row_data['rating'],
-                    fecha_rating=row_data['fecha_rating'],
-                    fecha_vencimiento=row_data.get('fecha_vencimiento'),
-                    outlook=row_data.get('outlook', 'ESTABLE'),
-                    notas=row_data.get('notas', ''),
+                    valid_from=row_data['valid_from'],
+                    valid_to=valid_to_value,
+                    status=status_value,
+                    risk_level=risk_level_value,
+                    comments=comments_value,
                     analista=bulk_upload.usuario,
-                    activo=True
                 )
                 
                 # Crear item exitoso

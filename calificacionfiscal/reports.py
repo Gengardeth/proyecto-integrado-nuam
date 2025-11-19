@@ -34,8 +34,8 @@ def generar_reporte_csv(queryset, filename='reporte_tax_ratings.csv'):
     
     # Headers
     writer.writerow([
-        'ID', 'Issuer', 'Instrument', 'Rating', 'Fecha Rating', 
-        'Fecha Vencimiento', 'Outlook', 'Analista', 'Activo', 'Creado En'
+        'ID', 'Issuer', 'Instrument', 'Rating', 'Válido Desde', 
+        'Válido Hasta', 'Estado', 'Nivel Riesgo', 'Analista', 'Creado En'
     ])
     
     # Datos
@@ -45,11 +45,11 @@ def generar_reporte_csv(queryset, filename='reporte_tax_ratings.csv'):
             obj.issuer.nombre,
             obj.instrument.nombre,
             obj.rating,
-            obj.fecha_rating.strftime('%Y-%m-%d'),
-            obj.fecha_vencimiento.strftime('%Y-%m-%d') if obj.fecha_vencimiento else '',
-            obj.outlook,
+            obj.valid_from.strftime('%Y-%m-%d'),
+            obj.valid_to.strftime('%Y-%m-%d') if obj.valid_to else '',
+            obj.status,
+            obj.risk_level,
             obj.analista.username if obj.analista else '',
-            'Sí' if obj.activo else 'No',
             obj.creado_en.strftime('%Y-%m-%d %H:%M:%S')
         ])
     
@@ -135,15 +135,15 @@ def generar_reporte_pdf(queryset, filename='reporte_tax_ratings.pdf', incluir_es
     elements.append(Spacer(1, 12))
     
     # Datos de la tabla
-    data = [['Issuer', 'Instrument', 'Rating', 'Fecha', 'Outlook']]
+    data = [['Issuer', 'Instrument', 'Rating', 'Válido Desde', 'Estado']]
     
     for obj in queryset[:50]:  # Limitar a 50 para no sobrecargar el PDF
         data.append([
-            obj.issuer.nombre[:20],  # Truncar nombres largos
+            obj.issuer.nombre[:20],
             obj.instrument.nombre[:20],
             obj.rating,
-            obj.fecha_rating.strftime('%d/%m/%Y'),
-            obj.outlook
+            obj.valid_from.strftime('%d/%m/%Y'),
+            obj.status
         ])
     
     if queryset.count() > 50:
@@ -189,41 +189,31 @@ def obtener_estadisticas(queryset):
         dict: Diccionario con estadísticas
     """
     total = queryset.count()
-    activos = queryset.filter(activo=True).count()
-    inactivos = queryset.filter(activo=False).count()
-    
-    # Por rating
-    por_rating = {}
-    rating_stats = queryset.values('rating').annotate(count=Count('id'))
-    for stat in rating_stats:
-        por_rating[stat['rating']] = stat['count']
-    
-    # Por outlook
-    por_outlook = {}
-    outlook_stats = queryset.values('outlook').annotate(count=Count('id'))
-    for stat in outlook_stats:
-        por_outlook[stat['outlook']] = stat['count']
-    
-    # Top issuers
+    vigentes = queryset.filter(status='VIGENTE').count()
+
+    por_rating = list(
+        queryset.values('rating').annotate(count=Count('id')).order_by('-count')
+    )
+    por_status = list(
+        queryset.values('status').annotate(count=Count('id')).order_by('-count')
+    )
+    por_risk_level = list(
+        queryset.values('risk_level').annotate(count=Count('id')).order_by('-count')
+    )
+
     top_issuers = list(
-        queryset.values('issuer__nombre')
-        .annotate(count=Count('id'))
-        .order_by('-count')[:10]
+        queryset.values('issuer__nombre').annotate(count=Count('id')).order_by('-count')[:10]
     )
-    
-    # Top instruments
     top_instruments = list(
-        queryset.values('instrument__nombre')
-        .annotate(count=Count('id'))
-        .order_by('-count')[:10]
+        queryset.values('instrument__nombre').annotate(count=Count('id')).order_by('-count')[:10]
     )
-    
+
     return {
         'total': total,
-        'activos': activos,
-        'inactivos': inactivos,
+        'vigentes': vigentes,
         'por_rating': por_rating,
-        'por_outlook': por_outlook,
+        'por_status': por_status,
+        'por_risk_level': por_risk_level,
         'top_issuers': top_issuers,
         'top_instruments': top_instruments,
     }

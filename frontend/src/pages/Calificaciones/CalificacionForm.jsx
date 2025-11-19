@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ratingsService from '../../services/ratings';
 import issuersService from '../../services/issuers';
 import instrumentsService from '../../services/instruments';
-import { RATING_STATUS_LABELS } from '../../utils/constants';
+import { RATING_STATUS_LABELS, RATINGS } from '../../utils/constants';
 import '../../styles/Calificaciones.css';
 
 const CalificacionForm = () => {
@@ -171,17 +171,19 @@ const CalificacionForm = () => {
 
           <div className="form-group">
             <label htmlFor="rating">Rating *</label>
-            <input
-              type="text"
+            <select
               id="rating"
               name="rating"
               value={formData.rating}
               onChange={handleChange}
               required
-              placeholder="Ej: AAA, AA+, BBB-"
               className="form-control"
-              maxLength={10}
-            />
+            >
+              <option value="">Seleccionar rating...</option>
+              {RATINGS.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">
@@ -221,7 +223,6 @@ const CalificacionForm = () => {
               name="valid_to"
               value={formData.valid_to}
               onChange={handleChange}
-              required
               className="form-control"
             />
           </div>

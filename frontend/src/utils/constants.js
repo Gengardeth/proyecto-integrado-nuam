@@ -21,12 +21,14 @@ export const RATING_STATUS = {
   VIGENTE: 'VIGENTE',
   VENCIDO: 'VENCIDO',
   SUSPENDIDO: 'SUSPENDIDO',
+  CANCELADO: 'CANCELADO',
 };
 
 export const RATING_STATUS_LABELS = {
   [RATING_STATUS.VIGENTE]: 'Vigente',
   [RATING_STATUS.VENCIDO]: 'Vencido',
   [RATING_STATUS.SUSPENDIDO]: 'Suspendido',
+  [RATING_STATUS.CANCELADO]: 'Cancelado',
 };
 
 // Colores por estado
@@ -34,16 +36,13 @@ export const RATING_STATUS_COLORS = {
   [RATING_STATUS.VIGENTE]: 'success',
   [RATING_STATUS.VENCIDO]: 'danger',
   [RATING_STATUS.SUSPENDIDO]: 'warning',
+  [RATING_STATUS.CANCELADO]: 'secondary',
 };
 
 // Tipos de calificación
+// Opciones alineadas con TaxRating.RATING_CHOICES del backend
 export const RATINGS = [
-  'AAA', 'AA+', 'AA', 'AA-', 
-  'A+', 'A', 'A-', 
-  'BBB+', 'BBB', 'BBB-',
-  'BB+', 'BB', 'BB-',
-  'B+', 'B', 'B-',
-  'CCC', 'CC', 'C', 'D'
+  'AAA', 'AA', 'A', 'BBB', 'BB', 'B', 'CCC', 'CC', 'C', 'D'
 ];
 
 // Outlook

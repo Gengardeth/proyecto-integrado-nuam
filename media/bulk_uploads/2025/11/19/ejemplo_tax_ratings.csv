@@ -1,0 +1,5 @@
+issuer_codigo,instrument_codigo,rating,valid_from,valid_to,status,risk_level,comments
+ACM001,BOND001,AA,2024-10-01,,VIGENTE,BAJO,Empresa sólida; emisión local
+ACM001,BOND002,BBB,2024-11-15,2025-11-14,VIGENTE,MODERADO,
+FOO123,CP001,CCC,2024-09-01,2024-12-31,VENCIDO,MUY_ALTO,Riesgo elevado en corto plazo
+XYZ789,NOTE10,A,2025-01-10,,SUSPENDIDO,MODERADO,Suspendida por revisión regulatoria

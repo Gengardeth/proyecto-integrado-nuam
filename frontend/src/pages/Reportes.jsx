@@ -7,6 +7,11 @@ import { formatDate } from '../utils/dateFormat';
 import { RATING_STATUS_LABELS } from '../utils/constants';
 import '../styles/Reportes.css';
 
+// Animación fade-in para la pantalla de reportes
+const fadeInStyle = {
+  animation: 'fadeIn 0.7s',
+};
+
 const Reportes = () => {
   const [filters, setFilters] = useState({
     fecha_desde: '',
@@ -83,7 +88,7 @@ const Reportes = () => {
   };
 
   return (
-    <div className="reportes-container">
+    <div className="reportes-container" style={fadeInStyle}>
       <div className="reportes-header">
         <h1>Reportes</h1>
         <p className="subtitle">Genera reportes de calificaciones con filtros personalizados</p>
@@ -92,6 +97,7 @@ const Reportes = () => {
       <div className="report-filters-card">
         <h2>Filtros</h2>
         <div className="filters-grid">
+          {/* ...existing code... */}
           <div className="filter-group">
             <label htmlFor="fecha_desde">Fecha Desde</label>
             <input
@@ -103,7 +109,6 @@ const Reportes = () => {
               className="filter-input"
             />
           </div>
-
           <div className="filter-group">
             <label htmlFor="fecha_hasta">Fecha Hasta</label>
             <input
@@ -115,7 +120,6 @@ const Reportes = () => {
               className="filter-input"
             />
           </div>
-
           <div className="filter-group">
             <label htmlFor="status">Estado</label>
             <select
@@ -162,7 +166,6 @@ const Reportes = () => {
             </select>
           </div>
         </div>
-
         <div className="filter-actions">
           <button
             className="btn-secondary"
@@ -174,6 +177,7 @@ const Reportes = () => {
             className="btn-primary"
             onClick={handleGenerate}
             disabled={loading}
+            style={loading ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
           >
             {loading ? 'Generando...' : '📊 Generar Reporte'}
           </button>
@@ -189,19 +193,21 @@ const Reportes = () => {
                 className="btn-export"
                 onClick={() => handleExport('csv')}
                 disabled={exporting}
+                style={exporting ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
               >
-                📄 Exportar CSV
+                {exporting ? 'Exportando...' : '📄 Exportar CSV'}
               </button>
               <button
                 className="btn-export"
                 onClick={() => handleExport('pdf')}
                 disabled={exporting}
+                style={exporting ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
               >
-                📕 Exportar PDF
+                {exporting ? 'Exportando...' : '📕 Exportar PDF'}
               </button>
             </div>
           </div>
-
+          {/* ...existing code... */}
           <div className="report-stats">
             <div className="stat-card">
               <span className="stat-label">Total Calificaciones</span>
@@ -220,7 +226,6 @@ const Reportes = () => {
               <span className="stat-value-mini">{(stats.por_status || []).length}</span>
             </div>
           </div>
-
           <div className="breakdown-grid">
             <div className="breakdown-section">
               <h3>Distribución Rating</h3>
@@ -247,7 +252,6 @@ const Reportes = () => {
               </ul>
             </div>
           </div>
-
           {rawData && rawData.length > 0 && (
             <div className="report-table-container">
               <table className="report-table">
@@ -290,6 +294,11 @@ const Reportes = () => {
           <p>Configura los filtros y presiona "Generar Reporte" para ver los resultados</p>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="reportes-footer">
+        <p>© {new Date().getFullYear()} NUAM | Sistema de Calificación Fiscal</p>
+      </footer>
     </div>
   );
 };

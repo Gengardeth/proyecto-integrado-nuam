@@ -6,7 +6,7 @@ export const issuersService = {
   create: (data) => api.post('/issuers/', data),
   update: (id, data) => api.put(`/issuers/${id}/`, data),
   remove: (id) => api.delete(`/issuers/${id}/`),
-  listActive: () => api.get('/issuers/?activo=true'), // suponiendo filtro activo
+  listActive: () => api.get('/issuers/activos/'),
 };
 
 export default issuersService;

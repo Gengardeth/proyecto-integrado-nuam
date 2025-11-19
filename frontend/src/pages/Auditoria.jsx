@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import auditService from '../services/audit';
-import { formatDate } from '../utils/dateFormat';
 import { groupAuditLogsByDate } from '../utils/audit';
 import '../styles/Auditoria.css';
 
@@ -20,34 +19,26 @@ const Auditoria = () => {
     pageSize: 20,
     total: 0
   });
-  const [viewMode, setViewMode] = useState('timeline'); // 'timeline' | 'tabla'
+  const [viewMode, setViewMode] = useState('tabla'); // 'tabla' | 'timeline'
 
   const fetchLogs = useCallback(async () => {
     try {
       setLoading(true);
-      let endpointFn = auditService.list;
-      let params = {
+      const params = {
         page: pagination.page,
         page_size: pagination.pageSize,
       };
-      // Filtrado por acción via endpoint especializado
-      if (filters.accion) {
-        endpointFn = (p) => auditService.list({ ...p, accion: filters.accion });
-      }
-      // Filtrado por modelo via endpoint especializado
-      if (filters.modelo) {
-        endpointFn = (p) => auditService.list({ ...p, modelo: filters.modelo });
-      }
-      // Búsqueda por usuario (username) usando search filter DRF
-      if (filters.usuario) {
-        params.search = filters.usuario;
-      }
-      // Filtros de fecha ahora soportados en backend (creado_en rango inclusivo)
+      
+      if (filters.usuario) params.search = filters.usuario;
+      if (filters.accion) params.accion = filters.accion;
+      if (filters.modelo) params.modelo = filters.modelo;
       if (filters.fecha_desde) params.fecha_desde = filters.fecha_desde;
       if (filters.fecha_hasta) params.fecha_hasta = filters.fecha_hasta;
-      const response = await endpointFn(params);
+      
+      const response = await auditService.list(params);
       const payload = response.data;
-      const items = payload.results || payload; // soporta paginado DRF o lista directa
+      const items = payload.results || payload;
+      
       setLogs(items);
       setGrouped(groupAuditLogsByDate(items));
       setPagination(prev => ({
@@ -71,6 +62,24 @@ const Auditoria = () => {
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
+  const handleClearFilters = () => {
+    setFilters({ usuario: '', accion: '', modelo: '', fecha_desde: '', fecha_hasta: '' });
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const getActionIcon = (action) => {
+    switch (action) {
+      case 'CREATE': return '➕';
+      case 'UPDATE': return '✏️';
+      case 'DELETE': return '🗑️';
+      case 'LOGIN': return '🔓';
+      case 'LOGOUT': return '🔐';
+      case 'EXPORT': return '📥';
+      case 'UPLOAD': return '📤';
+      default: return '•';
+    }
+  };
+
   const getActionColor = (action) => {
     switch (action) {
       case 'CREATE': return 'action-create';
@@ -82,30 +91,55 @@ const Auditoria = () => {
     }
   };
 
+  const formatDate = (isoString) => {
+    try {
+      const date = new Date(isoString);
+      return new Intl.DateTimeFormat('es-CL', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }).format(date);
+    } catch {
+      return isoString;
+    }
+  };
+
   const totalPages = Math.ceil(pagination.total / pagination.pageSize);
+
+  const fadeInStyle = { animation: 'fadeIn 0.7s' };
 
   if (loading && logs.length === 0) {
     return (
-      <div className="auditoria-container">
+      <div className="auditoria-container" style={fadeInStyle}>
         <div className="loading-state">
           <div className="spinner"></div>
-          <p>Cargando logs...</p>
+          <p>Cargando registros de auditoría...</p>
         </div>
+        <footer className="auditoria-footer">
+          <p>© {new Date().getFullYear()} NUAM | Sistema de Calificación Fiscal</p>
+        </footer>
       </div>
     );
   }
 
   return (
-    <div className="auditoria-container">
+    <div className="auditoria-container" style={fadeInStyle}>
       <div className="auditoria-header">
         <div>
           <h1>Auditoría</h1>
-          <p className="subtitle">Registro de todas las acciones realizadas en el sistema</p>
+          <p className="subtitle">Registro detallado de todas las acciones realizadas en el sistema</p>
         </div>
       </div>
 
       {/* Filtros */}
       <div className="audit-filters-card">
+        <div className="filters-header">
+          <h3>Filtros</h3>
+          <button className="btn-mini" onClick={handleClearFilters} disabled={loading}>🔄 Limpiar</button>
+        </div>
         <div className="filters-grid">
           <div className="filter-group">
             <label htmlFor="usuario">Usuario</label>
@@ -119,7 +153,6 @@ const Auditoria = () => {
               className="filter-input"
             />
           </div>
-
           <div className="filter-group">
             <label htmlFor="accion">Acción</label>
             <select
@@ -130,14 +163,15 @@ const Auditoria = () => {
               className="filter-select"
             >
               <option value="">Todas</option>
-              <option value="CREATE">Crear</option>
-              <option value="UPDATE">Actualizar</option>
-              <option value="DELETE">Eliminar</option>
-              <option value="LOGIN">Login</option>
-              <option value="LOGOUT">Logout</option>
+              <option value="CREATE">Crear (➕)</option>
+              <option value="UPDATE">Actualizar (✏️)</option>
+              <option value="DELETE">Eliminar (🗑️)</option>
+              <option value="LOGIN">Login (🔓)</option>
+              <option value="LOGOUT">Logout (🔐)</option>
+              <option value="EXPORT">Exportar (📥)</option>
+              <option value="UPLOAD">Subir (📤)</option>
             </select>
           </div>
-
           <div className="filter-group">
             <label htmlFor="modelo">Modelo</label>
             <input
@@ -150,9 +184,8 @@ const Auditoria = () => {
               className="filter-input"
             />
           </div>
-
           <div className="filter-group">
-            <label htmlFor="fecha_desde">Fecha Desde</label>
+            <label htmlFor="fecha_desde">Desde</label>
             <input
               type="date"
               id="fecha_desde"
@@ -162,9 +195,8 @@ const Auditoria = () => {
               className="filter-input"
             />
           </div>
-
           <div className="filter-group">
-            <label htmlFor="fecha_hasta">Fecha Hasta</label>
+            <label htmlFor="fecha_hasta">Hasta</label>
             <input
               type="date"
               id="fecha_hasta"
@@ -174,36 +206,33 @@ const Auditoria = () => {
               className="filter-input"
             />
           </div>
-
           <div className="filter-group">
             <button
-              className="btn-secondary"
-              onClick={() => {
-                setFilters({ usuario: '', accion: '', modelo: '', fecha_desde: '', fecha_hasta: '' });
-                setPagination(prev => ({ ...prev, page: 1 }));
-              }}
+              className="btn-toggle"
+              onClick={() => setViewMode(viewMode === 'tabla' ? 'timeline' : 'tabla')}
+              disabled={loading}
             >
-              Limpiar
-            </button>
-          </div>
-          <div className="filter-group">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => setViewMode(viewMode === 'timeline' ? 'tabla' : 'timeline')}
-            >
-              Vista: {viewMode === 'timeline' ? 'Tabla' : 'Timeline'}
+              {viewMode === 'tabla' ? '📊 Tabla' : '📈 Timeline'}
             </button>
           </div>
         </div>
       </div>
 
-      {viewMode === 'tabla' && (
+      {/* Estado vacío */}
+      {!loading && logs.length === 0 && (
+        <div className="empty-state-card">
+          <p className="empty-icon">🔍</p>
+          <p>No hay registros de auditoría que coincidan con los filtros aplicados.</p>
+        </div>
+      )}
+
+      {/* Vista Tabla */}
+      {viewMode === 'tabla' && logs.length > 0 && (
         <div className="audit-table-card">
           <table className="audit-table">
             <thead>
               <tr>
-                <th>Fecha y Hora</th>
+                <th>Fecha/Hora</th>
                 <th>Usuario</th>
                 <th>Acción</th>
                 <th>Modelo</th>
@@ -211,86 +240,85 @@ const Auditoria = () => {
               </tr>
             </thead>
             <tbody>
-              {logs.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="empty-state">No hay logs de auditoría</td>
+              {logs.map((log, idx) => (
+                <tr key={log.id || idx} className={`log-row ${getActionColor(log.accion)}`}>
+                  <td className="fecha-col">{formatDate(log.creado_en)}</td>
+                  <td className="usuario-col">
+                    <strong>{log.usuario?.username || 'N/A'}</strong>
+                  </td>
+                  <td className="accion-col">
+                    <span className="action-badge">
+                      {getActionIcon(log.accion)} {log.accion}
+                    </span>
+                  </td>
+                  <td className="modelo-col">{log.modelo || '—'}</td>
+                  <td className="descripcion-col">{log.descripcion || '—'}</td>
                 </tr>
-              ) : (
-                logs.map(log => (
-                  <tr key={log.id}>
-                    <td>{formatDate(log.creado_en, true)}</td>
-                    <td>
-                      <div className="user-cell">
-                        <div className="user-avatar-small">
-                          {log.usuario_username?.charAt(0).toUpperCase() || 'S'}
-                        </div>
-                        {log.usuario_username || 'Sistema'}
-                      </div>
-                    </td>
-                    <td><span className={`action-badge ${getActionColor(log.accion)}`}>{log.accion}</span></td>
-                    <td><span className="model-name">{log.modelo}</span></td>
-                    <td className="details-cell">{log.descripcion || '-'}</td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
       )}
 
-      {viewMode === 'timeline' && (
+      {/* Vista Timeline */}
+      {viewMode === 'timeline' && logs.length > 0 && (
         <div className="timeline-wrapper">
-          {grouped.length === 0 ? (
-            <div className="empty-state">No hay logs de auditoría</div>
-          ) : (
-            grouped.map(day => (
-              <div key={day.fecha} className="timeline-day">
-                <div className="timeline-date">{day.fecha_legible}</div>
-                <div className="timeline-items">
-                  {day.items.map(item => (
-                    <div key={item.id} className="timeline-item">
-                      <div className="timeline-time">{formatDate(item.creado_en, true).split(' ')[1]}</div>
-                      <div className="timeline-content">
-                        <div className="timeline-row">
-                          <div className="user-avatar-small mini">{item.usuario_username?.charAt(0).toUpperCase() || 'S'}</div>
-                          <span className={`action-badge ${getActionColor(item.accion)}`}>{item.accion}</span>
-                          <span className="model-name inline">{item.modelo}</span>
-                        </div>
-                        <div className="timeline-desc">{item.descripcion || '-'}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          {grouped.map((dayGroup, dayIdx) => (
+            <div key={dayIdx} className="timeline-day">
+              <div className="timeline-day-header">
+                <span className="timeline-date">{dayGroup.fecha_legible}</span>
+                <span className="timeline-count">{dayGroup.items.length} eventos</span>
               </div>
-            ))
-          )}
+              <div className="timeline-items">
+                {dayGroup.items.map((log, logIdx) => (
+                  <div key={log.id || logIdx} className={`timeline-item ${getActionColor(log.accion)}`}>
+                    <div className="timeline-item-dot">
+                      <span className="timeline-icon">{getActionIcon(log.accion)}</span>
+                    </div>
+                    <div className="timeline-item-content">
+                      <div className="timeline-item-header">
+                        <strong className="timeline-action">{log.accion}</strong>
+                        <span className="timeline-time">{new Date(log.creado_en).toLocaleTimeString('es-CL')}</span>
+                      </div>
+                      <p className="timeline-user">👤 {log.usuario?.username || 'Sistema'}</p>
+                      <p className="timeline-description">{log.descripcion || 'Sin descripción'}</p>
+                      {log.modelo && <p className="timeline-model">📋 {log.modelo}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       {/* Paginación */}
-      {totalPages > 1 && (
+      {!loading && totalPages > 1 && (
         <div className="pagination">
           <button
             className="pagination-btn"
-            onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+            onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
             disabled={pagination.page === 1}
           >
             ← Anterior
           </button>
-          
           <span className="pagination-info">
             Página {pagination.page} de {totalPages} ({pagination.total} registros)
           </span>
-          
           <button
             className="pagination-btn"
-            onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+            onClick={() => setPagination(prev => ({ ...prev, page: Math.min(totalPages, prev.page + 1) }))}
             disabled={pagination.page >= totalPages}
           >
             Siguiente →
           </button>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="auditoria-footer">
+        <p>© {new Date().getFullYear()} NUAM | Sistema de Calificación Fiscal</p>
+      </footer>
     </div>
   );
 };

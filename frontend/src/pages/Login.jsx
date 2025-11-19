@@ -35,15 +35,17 @@ const Login = () => {
     <div className="login-container">
       <div className="login-decoration-left"></div>
       <div className="login-decoration-right"></div>
-      
       <div className="login-box">
-        <div className="login-logo">
-          <img src={nuamLogo} alt="NUAM Exchange" />
+        <div className="login-logo" style={{ animation: 'fadeIn 0.7s' }}>
+          <img src={nuamLogo} alt="NUAM Exchange" style={{ filter: 'drop-shadow(0 6px 16px #FF5722)' }} />
         </div>
-
         <form onSubmit={handleSubmit} className="login-form">
-          {error && <div className="login-error">{error}</div>}
-          
+          {error && (
+            <div className="login-error">
+              <span style={{fontSize: '18px', marginRight: '8px'}}>⚠️</span>
+              {error}
+            </div>
+          )}
           <div className="form-group">
             <input
               type="text"
@@ -53,9 +55,9 @@ const Login = () => {
               onChange={handleChange}
               required
               autoComplete="username"
+              style={{ fontWeight: 500, letterSpacing: '0.5px' }}
             />
           </div>
-
           <div className="form-group">
             <input
               type="password"
@@ -65,17 +67,21 @@ const Login = () => {
               onChange={handleChange}
               required
               autoComplete="current-password"
+              style={{ fontWeight: 500, letterSpacing: '0.5px' }}
             />
           </div>
-
           <button 
             type="submit" 
             className="login-button"
             disabled={loading}
+            style={{ boxShadow: loading ? 'none' : '0 4px 15px #FF5722' }}
           >
-            {loading ? 'Ingresando...' : 'Ingresar'}
+            {loading ? <span>⏳ Ingresando...</span> : <span>Ingresar</span>}
           </button>
         </form>
+        <div style={{marginTop: 32, textAlign: 'center', color: '#bbb', fontSize: 13}}>
+          <span>© NUAM Exchange 2025</span>
+        </div>
       </div>
     </div>
   );

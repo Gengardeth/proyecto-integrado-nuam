@@ -4,7 +4,7 @@ export const bulkUploadsService = {
   list: (params = {}) => api.get('/bulk-uploads/', { params }),
   get: (id) => api.get(`/bulk-uploads/${id}/`),
   upload: (formData, onProgress) => api.post('/bulk-uploads/', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    // Importante: no fijar Content-Type manualmente; el navegador añade el boundary
     onUploadProgress: (evt) => {
       if (onProgress && evt.total) {
         const percent = Math.round((evt.loaded * 100) / evt.total);

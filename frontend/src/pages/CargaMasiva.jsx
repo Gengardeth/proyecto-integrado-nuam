@@ -10,11 +10,11 @@ const CargaMasiva = () => {
   const [resultado, setResultado] = useState(null);
   const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
-  const [uploads, setUploads] = useState([]);
-  const [loadingUploads, setLoadingUploads] = useState(false);
-  const [selectedUpload, setSelectedUpload] = useState(null);
-  const [items, setItems] = useState([]);
-  const [loadingItems, setLoadingItems] = useState(false);
+    const [_uploads, setUploads] = useState([]);
+    const [_loadingUploads, setLoadingUploads] = useState(false);
+    const [_selectedUpload, setSelectedUpload] = useState(null);
+  const [_items, setItems] = useState([]);
+  const [_loadingItems, setLoadingItems] = useState(false);
   // Estadísticas reservadas para futuras mejoras de feedback post-procesamiento
   const [estadisticas, setEstadisticas] = useState(null); // eslint-disable-line no-unused-vars
 
@@ -104,7 +104,16 @@ const CargaMasiva = () => {
       fetchUploads();
     } catch (err) {
       console.error('Upload error:', err);
-      setError(err.response?.data?.detail || 'Error al subir');
+      // Extraer mensaje útil del backend
+      const data = err.response?.data;
+      let msg = data?.detail || data?.error;
+      if (!msg && data && typeof data === 'object') {
+        const firstKey = Object.keys(data)[0];
+        const firstVal = data[firstKey];
+        if (Array.isArray(firstVal)) msg = firstVal[0];
+        else if (typeof firstVal === 'string') msg = firstVal;
+      }
+      setError(msg || 'Error al subir');
     } finally {
       setUploading(false);
     }
@@ -117,7 +126,7 @@ const CargaMasiva = () => {
     setError(null);
   };
 
-  const handleProcesar = async (id) => {
+  const _handleProcesar = async (id) => {
     if (!window.confirm('¿Procesar esta carga?')) return;
     try {
       await bulkUploadsService.procesar(id);
@@ -128,7 +137,7 @@ const CargaMasiva = () => {
     }
   };
 
-  const handleVerItems = async (upload) => {
+  const _handleVerItems = async (upload) => {
     setSelectedUpload(upload);
     setLoadingItems(true);
     try {
@@ -141,13 +150,19 @@ const CargaMasiva = () => {
     }
   };
 
+  // Animación fade-in para la pantalla de carga masiva
+  const fadeInStyle = {
+    animation: 'fadeIn 0.7s',
+  };
+
   return (
-    <div className="carga-masiva-container">
+    <div className="carga-masiva-container" style={fadeInStyle}>
       <div className="carga-header">
         <h1>Carga Masiva</h1>
         <p className="subtitle">Importa múltiples calificaciones desde CSV / Excel</p>
       </div>
 
+      {/* ...existing code... */}
       <div className="upload-card">
         <div
           className={`drop-zone ${dragActive ? 'active' : ''} ${file ? 'has-file' : ''}`}
@@ -184,9 +199,7 @@ const CargaMasiva = () => {
             </>
           )}
         </div>
-
         {error && <div className="error-message">⚠️ {error}</div>}
-
         {uploading && (
           <div className="progress-container">
             <div className="progress-label">
@@ -198,19 +211,19 @@ const CargaMasiva = () => {
             </div>
           </div>
         )}
-
         {file && !resultado && (
           <div className="upload-actions">
-            <button className="btn-secondary" onClick={handleReset} disabled={uploading}>
+            <button className="btn-secondary" onClick={handleReset} disabled={uploading} style={uploading ? { opacity: 0.7, cursor: 'not-allowed' } : {}}>
               Cancelar
             </button>
-            <button className="btn-primary" onClick={handleUpload} disabled={uploading}>
+            <button className="btn-primary" onClick={handleUpload} disabled={uploading} style={uploading ? { opacity: 0.7, cursor: 'not-allowed' } : {}}>
               {uploading ? 'Cargando...' : '⬆️ Cargar Archivo'}
             </button>
           </div>
         )}
       </div>
 
+      {/* ...existing code... */}
       {resultado && (
         <div className="result-card">
           <div className="result-header">
@@ -246,71 +259,59 @@ const CargaMasiva = () => {
         </div>
       )}
 
+      {/* ...existing code... */}
       <div className="uploads-card">
         <div className="uploads-header">
           <h2>Cargas Recientes</h2>
-          <button className="btn-refresh" onClick={fetchUploads} disabled={loadingUploads}>🔄</button>
+          <button className="btn-refresh" onClick={fetchUploads} disabled={_loadingUploads} style={_loadingUploads ? { opacity: 0.7, cursor: 'not-allowed' } : {}}>🔄</button>
         </div>
-        <div className="table-responsive">
-          <table className="uploads-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Archivo</th>
-                <th>Tipo</th>
-                <th>Estado</th>
-                <th>OK</th>
-                <th>Error</th>
-                <th>% Éxito</th>
-                <th>Creado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {uploads.length === 0 && (
+        {_uploads.length === 0 ? (
+          <p className="no-data">No hay cargas registradas aún</p>
+        ) : (
+          <div className="table-responsive">
+            <table className="uploads-table">
+              <thead>
                 <tr>
-                  <td colSpan="9" className="empty-row">No hay cargas registradas</td>
+                  <th>ID</th>
+                  <th>Archivo</th>
+                  <th>Tipo</th>
+                  <th>Estado</th>
+                  <th>Filas OK / Error</th>
+                  <th>Éxito %</th>
+                  <th>Fecha</th>
+                  <th>Acciones</th>
                 </tr>
-              )}
-              {uploads.map((u) => (
-                <tr key={u.id} className={u.estado.toLowerCase()}>
-                  <td>{u.id}</td>
-                  <td>{u.archivo?.split('/').pop() || '—'}</td>
-                  <td>{u.tipo}</td>
-                  <td>
-                    <span className={`estado-badge estado-${u.estado.toLowerCase()}`}>{u.estado}</span>
-                  </td>
-                  <td>{u.filas_ok}</td>
-                  <td>{u.filas_error}</td>
-                  <td>{u.porcentaje_exito}%</td>
-                  <td>{new Date(u.creado_en).toLocaleString()}</td>
-                  <td className="row-actions">
-                    <button
-                      className="btn-mini"
-                      onClick={() => handleVerItems(u)}
-                      title="Ver items"
-                    >
-                      👁️
-                    </button>
-                    {u.estado === 'PENDIENTE' && (
-                      <button
-                        className="btn-mini btn-procesar"
-                        onClick={() => handleProcesar(u.id)}
-                        title="Procesar"
-                      >
-                        ⚙️
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {selectedUpload && (
+              </thead>
+              <tbody>
+                {_uploads.map((upload) => (
+                  <tr key={upload.id}>
+                    <td>#{upload.id}</td>
+                    <td>{upload.archivo.split('/').pop()}</td>
+                    <td>{upload.tipo}</td>
+                    <td>
+                      <span className={`badge badge-${upload.estado.toLowerCase()}`}>
+                        {upload.estado}
+                      </span>
+                    </td>
+                    <td>{upload.filas_ok} / {upload.filas_error}</td>
+                    <td>{upload.porcentaje_exito}%</td>
+                    <td>{new Date(upload.creado_en).toLocaleDateString()}</td>
+                    <td>
+                      <button className="btn-mini" onClick={() => _handleVerItems(upload)} title="Ver detalles">👁️</button>
+                      {upload.estado === 'PENDIENTE' && (
+                        <button className="btn-mini" onClick={() => _handleProcesar(upload.id)} title="Procesar">▶️</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {_selectedUpload && (
           <div className="items-panel">
             <div className="items-header">
-              <h3>Items de carga #{selectedUpload.id}</h3>
+              <h3>Items de carga #{_selectedUpload.id}</h3>
               <button
                 className="btn-mini"
                 onClick={() => {
@@ -321,55 +322,66 @@ const CargaMasiva = () => {
                 ✖
               </button>
             </div>
-            {loadingItems ? (
+            {_loadingItems ? (
               <p>Cargando items...</p>
-            ) : items.length === 0 ? (
-              <p className="mini-text">Sin items o aún no procesado.</p>
+            ) : _items.length === 0 ? (
+              <p>No hay items para esta carga. Procésala primero.</p>
             ) : (
-              <div className="items-list">
-                {items.map((it) => (
-                  <div key={it.id} className={`item-row item-${it.estado.toLowerCase()}`}>
-                    <span className="item-num">#{it.numero_fila}</span>
-                    <span className="item-estado">{it.estado}</span>
-                    {it.mensaje_error && (
-                      <span className="item-error">{it.mensaje_error}</span>
-                    )}
-                  </div>
-                ))}
+              <div className="items-table-container">
+                <table className="items-table">
+                  <thead>
+                    <tr>
+                      <th>Fila</th>
+                      <th>Estado</th>
+                      <th>Mensaje</th>
+                      <th>Datos</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {_items.map((item) => (
+                      <tr key={item.id} className={`item-${item.estado.toLowerCase()}`}>
+                        <td>{item.numero_fila}</td>
+                        <td>
+                          <span className={`badge badge-${item.estado.toLowerCase()}`}>
+                            {item.estado}
+                          </span>
+                        </td>
+                        <td>{item.mensaje_error || '—'}</td>
+                        <td className="item-data">{JSON.stringify(item.datos).substring(0, 50)}...</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
         )}
       </div>
 
+      {/* ...existing code... */}
       <div className="instructions-card">
         <h2>📋 Instrucciones</h2>
         <div className="instructions-content">
-          <h3>Formato del archivo</h3>
-          <p>El archivo debe contener las siguientes columnas:</p>
-          <ul>
-            <li><strong>issuer_codigo</strong>: Código del issuer</li>
-            <li><strong>instrument_nombre</strong>: Nombre del instrumento</li>
-            <li><strong>rating</strong>: Calificación (ej: AAA, AA+, etc.)</li>
-            <li><strong>fecha_emision</strong>: Fecha de emisión (YYYY-MM-DD)</li>
-            <li><strong>fecha_vigencia</strong>: Fecha de vigencia (YYYY-MM-DD)</li>
-            <li><strong>status</strong>: VIGENTE, VENCIDO o SUSPENDIDO</li>
+          <ul className="instructions-list">
+            <li>Formatos soportados: CSV o Excel (.xlsx, .xls). Tamaño máx 10MB.</li>
+            <li>Encabezados requeridos: <code>issuer_codigo</code>, <code>instrument_codigo</code>, <code>rating</code>, <code>valid_from</code>.</li>
+            <li>Campos opcionales: <code>valid_to</code>, <code>status</code>, <code>risk_level</code>, <code>comments</code>.</li>
+            <li>Valores válidos:
+              <br/>rating: AAA, AA, A, BBB, BB, B, CCC, CC, C, D
+              <br/>status: VIGENTE, VENCIDO, SUSPENDIDO, CANCELADO
+              <br/>risk_level: MUY_BAJO, BAJO, MODERADO, ALTO, MUY_ALTO
+            </li>
+            <li><code>valid_from</code> y <code>valid_to</code> usan formato YYYY-MM-DD. Si se indica <code>valid_to</code>, debe ser posterior.</li>
+            <li>Los códigos de emisor e instrumento deben existir previamente en el sistema.</li>
           </ul>
-          <h3>Ejemplo CSV</h3>
-          <div className="code-block">
-            issuer_codigo,instrument_nombre,rating,fecha_emision,fecha_vigencia,status<br/>
-            ISS001,Bono Corporativo 2025,AAA,2025-01-15,2030-01-15,VIGENTE<br/>
-            ISS002,Acción Preferente,AA+,2025-02-01,2028-02-01,VIGENTE
-          </div>
-          <h3>Notas importantes</h3>
-          <ul>
-            <li>Issuer e instrumento deben existir previamente</li>
-            <li>Fechas en formato YYYY-MM-DD</li>
-            <li>Valores de status: VIGENTE, VENCIDO, SUSPENDIDO</li>
-            <li>Archivo máximo 10MB</li>
-          </ul>
+          <p className="mini-text">Consulta la documentación del formato en <code>docs/UPLOAD_FORMAT.md</code> dentro del repositorio.</p>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="carga-footer">
+        <p>© {new Date().getFullYear()} NUAM | Sistema de Calificación Fiscal</p>
+      </footer>
     </div>
   );
 };

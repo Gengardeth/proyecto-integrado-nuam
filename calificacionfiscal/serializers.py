@@ -128,7 +128,7 @@ class BulkUploadSerializer(serializers.ModelSerializer):
             'porcentaje_exito', 'fecha_inicio', 'fecha_fin', 'creado_en', 'actualizado_en'
         )
         read_only_fields = (
-            'id', 'usuario', 'estado', 'total_filas', 'filas_ok', 'filas_error', 
+            'id', 'usuario', 'estado', 'tipo', 'total_filas', 'filas_ok', 'filas_error', 
             'resumen_errores', 'fecha_inicio', 'fecha_fin', 'creado_en', 'actualizado_en'
         )
     

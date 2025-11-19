@@ -1,0 +1,4 @@
+issuer_codigo,instrument_codigo,rating,valid_from,valid_to,status,risk_level,comments
+212412414,1243523,AA,2024-10-01,,VIGENTE,BAJO,Empresa sólida; emisión local
+212412414,1243523,BBB,2024-11-15,2025-11-14,VIGENTE,MODERADO,Comentario
+66666666,1243523,CCC,2024-09-01,2024-12-31,VENCIDO,MUY_ALTO,Riesgo elevado en corto plazo

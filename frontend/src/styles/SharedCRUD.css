@@ -1,9 +1,13 @@
 /* Shared CRUD Styles para Issuers, Instruments, etc. */
 
 .crud-container {
-  padding: 2rem 3rem;
+  padding: 2rem;
   max-width: 100%;
   box-sizing: border-box;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
 }
 
 /* Header */

@@ -6,7 +6,7 @@ export const instrumentsService = {
   create: (data) => api.post('/instruments/', data),
   update: (id, data) => api.put(`/instruments/${id}/`, data),
   remove: (id) => api.delete(`/instruments/${id}/`),
-  listActive: () => api.get('/instruments/?activo=true'),
+  listActive: () => api.get('/instruments/activos/'),
 };
 
 export default instrumentsService;

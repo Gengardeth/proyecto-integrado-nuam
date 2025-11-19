@@ -496,9 +496,9 @@ class ReportsViewSet(viewsets.ViewSet):
         instrument_id = request.query_params.get('instrument_id')
         
         if fecha_desde:
-            queryset = queryset.filter(fecha_rating__gte=fecha_desde)
+            queryset = queryset.filter(valid_from__gte=fecha_desde)
         if fecha_hasta:
-            queryset = queryset.filter(fecha_rating__lte=fecha_hasta)
+            queryset = queryset.filter(valid_from__lte=fecha_hasta)
         if issuer_id:
             queryset = queryset.filter(issuer_id=issuer_id)
         if instrument_id:
@@ -519,9 +519,9 @@ class ReportsViewSet(viewsets.ViewSet):
         fecha_hasta = request.query_params.get('fecha_hasta')
         
         if fecha_desde:
-            queryset = queryset.filter(fecha_rating__gte=fecha_desde)
+            queryset = queryset.filter(valid_from__gte=fecha_desde)
         if fecha_hasta:
-            queryset = queryset.filter(fecha_rating__lte=fecha_hasta)
+            queryset = queryset.filter(valid_from__lte=fecha_hasta)
         
         return generar_reporte_csv(queryset)
     
@@ -538,9 +538,9 @@ class ReportsViewSet(viewsets.ViewSet):
         incluir_stats = request.query_params.get('incluir_estadisticas', 'true').lower() == 'true'
         
         if fecha_desde:
-            queryset = queryset.filter(fecha_rating__gte=fecha_desde)
+            queryset = queryset.filter(valid_from__gte=fecha_desde)
         if fecha_hasta:
-            queryset = queryset.filter(fecha_rating__lte=fecha_hasta)
+            queryset = queryset.filter(valid_from__lte=fecha_hasta)
         
         return generar_reporte_pdf(queryset, incluir_estadisticas=incluir_stats)
 

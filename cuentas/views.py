@@ -51,22 +51,11 @@ class LoginView(APIView):
             print(f"DEBUG Login: Session Key = {request.session.session_key}")
             print(f"DEBUG Login: User authenticated = {request.user.is_authenticated}")
             
-            response = Response({
+            # Dejar que Django SessionMiddleware maneje la cookie de sesión automáticamente
+            return Response({
                 'detail': 'Login exitoso',
                 'user': UsuarioProfileSerializer(user).data
             })
-            
-            # Asegurar que la cookie de sesión se envíe
-            response.set_cookie(
-                key='sessionid',
-                value=request.session.session_key,
-                max_age=86400,  # 24 horas
-                httponly=True,
-                samesite=None,
-                secure=False  # True en producción con HTTPS
-            )
-            
-            return response
         
         return Response(
             {'detail': 'Credenciales inválidas'},
