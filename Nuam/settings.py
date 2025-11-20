@@ -107,16 +107,21 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # CSRF settings para API
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:8000', 'http://127.0.0.1:8000']
 CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = None  # Permite cookies cross-origin
-CSRF_COOKIE_SECURE = False  # True solo en producción con HTTPS
+CSRF_COOKIE_SAMESITE = None  # No establecer SameSite en desarrollo
+CSRF_COOKIE_SECURE = False  # False en desarrollo
 
 # Session settings para cross-origin
-SESSION_COOKIE_SAMESITE = None  # Permite cookies cross-origin
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False  # True solo en producción con HTTPS
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_DOMAIN = None  # No establecer dominio (permite subdominios y puertos)
+SESSION_COOKIE_PATH = '/'
+SESSION_COOKIE_SAMESITE = None  # No establecer SameSite en desarrollo para permitir cross-port
+SESSION_COOKIE_HTTPONLY = False  # False para depuración
+SESSION_COOKIE_SECURE = False  # False en desarrollo
 SESSION_COOKIE_AGE = 86400  # 24 horas
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Usar base de datos para sesiones
+SESSION_SAVE_EVERY_REQUEST = True  # Guardar sesión en cada request
 
 ROOT_URLCONF = 'Nuam.urls'
 

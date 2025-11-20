@@ -51,15 +51,30 @@ class LoginView(APIView):
             )
             
             # Debug: verificar sesión
-            print(f"DEBUG Login: Session Key = {request.session.session_key}")
+            session_key = request.session.session_key
+            print(f"DEBUG Login: Session Key = {session_key}")
             print(f"DEBUG Login: User authenticated = {request.user.is_authenticated}")
             print(f"DEBUG Login: Session ID = {request.session.get('_auth_user_id', 'No session auth')}")
+            print(f"DEBUG Login: Cookies recibidas = {request.COOKIES}")
             
-            # Dejar que Django SessionMiddleware maneje la cookie de sesión automáticamente
+            # Crear respuesta con datos del usuario
             response = Response({
                 'detail': 'Login exitoso',
                 'user': UsuarioProfileSerializer(user).data
             })
+            
+            # Establecer explícitamente la cookie de sesión sin SameSite ni Domain
+            if session_key:
+                response.set_cookie(
+                    key='sessionid',
+                    value=session_key,
+                    max_age=86400,  # 24 horas
+                    secure=False,  # False en desarrollo
+                    httponly=False,  # False para depuración
+                    samesite=None,  # No establecer SameSite
+                    domain=None  # No establecer domain
+                )
+                print(f"DEBUG Login: Cookie establecida - sessionid={session_key}")
             
             return response
         
@@ -108,11 +123,14 @@ class MeView(APIView):
         print(f"DEBUG Me: User = {request.user}")
         print(f"DEBUG Me: Authenticated = {request.user.is_authenticated}")
         print(f"DEBUG Me: Session Key = {request.session.session_key}")
-        print(f"DEBUG Me: Cookies = {request.COOKIES}")
+        print(f"DEBUG Me: Cookies recibidas = {request.COOKIES}")
+        print(f"DEBUG Me: Session data = {dict(request.session.items())}")
         print(f"DEBUG Me: Auth Header = {request.META.get('HTTP_AUTHORIZATION', 'No auth header')}")
+        print(f"DEBUG Me: Origin = {request.META.get('HTTP_ORIGIN', 'No origin')}")
         
         # Si el usuario no está autenticado por sesión, verificar si hay autenticación fallida
         if not request.user.is_authenticated:
+            print(f"DEBUG Me: Usuario NO autenticado - devolviendo 401")
             return Response(
                 {'detail': 'No autenticado'},
                 status=status.HTTP_401_UNAUTHORIZED

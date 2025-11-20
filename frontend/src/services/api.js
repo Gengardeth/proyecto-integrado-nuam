@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 // Crear instancia de axios con configuración base
 const api = axios.create({
@@ -11,13 +11,23 @@ const api = axios.create({
   withCredentials: true, // Importante para enviar cookies de sesión
 });
 
+// Interceptor para request - asegurar que las cookies se envíen
+api.interceptors.request.use((config) => {
+  // Las cookies se envían automáticamente gracias a withCredentials: true
+  // pero podemos debuggear aquí si es necesario
+  return config;
+});
+
 // Interceptor para manejar errores de autenticación
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      // Solo redirigir si es 401 (no autorizado), no 403 (acceso prohibido)
+      if (error.response?.status === 401) {
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
