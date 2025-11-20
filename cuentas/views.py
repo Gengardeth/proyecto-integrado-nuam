@@ -37,6 +37,9 @@ class LoginView(APIView):
             
             login(request, user)
             
+            # Asegurar que la sesión se crea
+            request.session.save()
+            
             # Registrar login en auditoría
             AuditLog.objects.create(
                 usuario=user,
@@ -50,12 +53,15 @@ class LoginView(APIView):
             # Debug: verificar sesión
             print(f"DEBUG Login: Session Key = {request.session.session_key}")
             print(f"DEBUG Login: User authenticated = {request.user.is_authenticated}")
+            print(f"DEBUG Login: Session ID = {request.session.get('_auth_user_id', 'No session auth')}")
             
             # Dejar que Django SessionMiddleware maneje la cookie de sesión automáticamente
-            return Response({
+            response = Response({
                 'detail': 'Login exitoso',
                 'user': UsuarioProfileSerializer(user).data
             })
+            
+            return response
         
         return Response(
             {'detail': 'Credenciales inválidas'},
@@ -103,12 +109,26 @@ class MeView(APIView):
         print(f"DEBUG Me: Authenticated = {request.user.is_authenticated}")
         print(f"DEBUG Me: Session Key = {request.session.session_key}")
         print(f"DEBUG Me: Cookies = {request.COOKIES}")
+        print(f"DEBUG Me: Auth Header = {request.META.get('HTTP_AUTHORIZATION', 'No auth header')}")
+        
+        # Si el usuario no está autenticado por sesión, verificar si hay autenticación fallida
+        if not request.user.is_authenticated:
+            return Response(
+                {'detail': 'No autenticado'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
         
         serializer = UsuarioProfileSerializer(request.user)
         return Response(serializer.data)
     
     def patch(self, request):
         """Actualizar perfil del usuario actual."""
+        if not request.user.is_authenticated:
+            return Response(
+                {'detail': 'No autenticado'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
         serializer = UsuarioProfileSerializer(
             request.user,
             data=request.data,
