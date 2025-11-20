@@ -43,6 +43,10 @@ class TaxRatingPermission(permissions.BasePermission):
         
         user = request.user
         
+        # Si el usuario no tiene rol asignado, permitir acceso como ANALISTA por defecto
+        if not hasattr(user, 'rol') or not user.rol:
+            return True
+        
         # ADMIN puede todo
         if user.rol == 'ADMIN':
             return True
@@ -93,6 +97,10 @@ class BulkUploadPermission(permissions.BasePermission):
             return False
         
         user = request.user
+        
+        # Si el usuario no tiene rol, permitir acceso
+        if not hasattr(user, 'rol') or not user.rol:
+            return True
         
         if user.rol in ['ADMIN', 'ANALISTA']:
             return True
@@ -150,5 +158,9 @@ class ReportPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
+        
+        # Si el usuario no tiene rol, permitir acceso
+        if not hasattr(request.user, 'rol') or not request.user.rol:
+            return True
         
         return request.user.rol in ['ADMIN', 'ANALISTA', 'AUDITOR']
