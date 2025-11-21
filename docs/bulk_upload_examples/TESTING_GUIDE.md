@@ -35,6 +35,28 @@ Se proporcionan varios archivos de ejemplo listos para usar:
 - **Uso**: Probar validación con delimitador pipes
 - **Ventaja**: Más legible para revisar qué debe fallar
 
+### 5. `test_carga_masiva_1000_filas.txt` (Formato TSV - 1000 Registros) 🔥 STRESS TEST
+- **Ubicación**: `docs/bulk_upload_examples/test_carga_masiva_1000_filas.txt`
+- **Delimitador**: Tabulaciones
+- **Contenido**: 1000 registros MIXTOS
+- **Distribución**: ~500 válidos, ~500 inválidos (50% éxito esperado)
+- **Uso**: Testear rendimiento y límites de carga masiva
+- **Tipos de error incluidos**: 
+  - Issuer inexistente (~100 filas)
+  - Instrumento inexistente (~100 filas)
+  - Rating inválido (~100 filas)
+  - Fecha inválida (~100 filas)
+  - valid_to anterior a valid_from (~100 filas)
+- **Tamaño**: ~100-150 KB
+- **Tiempo esperado de procesamiento**: 30-60 segundos
+
+### 6. `test_carga_masiva_1000_filas_pipes.txt` (Formato Pipes - 1000 Registros) 🔥 STRESS TEST
+- **Ubicación**: `docs/bulk_upload_examples/test_carga_masiva_1000_filas_pipes.txt`
+- **Delimitador**: Pipes (|)
+- **Contenido**: Los mismos 1000 registros en formato pipes
+- **Uso**: Testear rendimiento con delimitador pipes
+- **Resultado esperado**: ~500 OK, ~500 ERROR
+
 ## Datos de Prueba en Archivos Base
 
 Los archivos `test_carga_masiva.txt` y `test_carga_masiva_pipes.txt` contienen 10 registros válidos:
@@ -230,6 +252,64 @@ for log in logs:
     print(f"{log.creado_en} | {log.usuario.username} | {log.accion} | {log.descripcion}")
 ```
 
+## 🔥 Stress Testing - Carga Masiva Grande
+
+### Caso de Uso: Procesar 1000 Registros
+
+Esta prueba valida que el sistema pueda manejar cargas grandes sin timeout ni errores.
+
+**Archivo**: `test_carga_masiva_1000_filas.txt` o `test_carga_masiva_1000_filas_pipes.txt`
+
+**Pasos**:
+1. Sube el archivo en Carga Masiva
+2. Verifica que el preview muestre **Total filas: 1000**
+3. Haz clic en **▶️ Procesar Carga**
+4. **Espera 30-60 segundos** mientras se procesa (no cierre la página)
+5. Verifica resultados aproximados:
+   - Total: 1000
+   - OK: ~500 (50%)
+   - Error: ~500 (50%)
+   - Éxito: ~50%
+
+**Qué se valida**:
+- ✅ El sistema no hace timeout en 1000 filas
+- ✅ Manejo correcto de lotes grandes
+- ✅ Validación rápida de datos
+- ✅ Conteo preciso de OK/ERROR
+- ✅ BD capacity adecuada
+
+**Resultados esperados por tipo de error**:
+- ~100 filas: Issuer inexistente → ERROR
+- ~100 filas: Instrumento inexistente → ERROR
+- ~100 filas: Rating inválido → ERROR
+- ~100 filas: Fecha inválida → ERROR
+- ~100 filas: valid_to anterior a valid_from → ERROR
+- ~500 filas: Datos válidos → OK
+
+**Métricas a monitorear**:
+- Tiempo de carga: ?
+- Memoria utilizada: ?
+- CPU durante procesamiento: ?
+- Errores en logs: ?
+
+### Limitaciones Conocidas
+
+| Límite | Valor | Notas |
+|--------|-------|-------|
+| Tamaño máximo archivo | 10 MB | Configurado en frontend |
+| Filas teóricas máximas | ~100,000 | Limitado por tamaño archivo |
+| Filas prácticas máximas | ~3,000 | Limitado por timeout (300s) |
+| Tiempo recomendado | <60s | Mejor UX para usuario |
+| Filas por segundo | ~50 | Velocidad de procesamiento |
+
+### Mejoras Futuras
+
+Para soportar cargas >5000 filas, se podría:
+1. **Procesamiento Asíncrono**: Usar Celery para procesar en background
+2. **Dividir en lotes**: Procesar 1000 filas por request
+3. **Progreso en tiempo real**: WebSocket para actualizar mientras se procesa
+4. **Aumento de timeout**: Configurar timeout más alto en servidor
+
 ## Troubleshooting
 
 ### ❌ "Solo se aceptan archivos UTF-8"
@@ -239,7 +319,6 @@ for log in logs:
 1. Abre el archivo con VS Code
 2. En la esquina inferior derecha, haz clic en "UTF-8"
 3. Selecciona "Save with Encoding" → "UTF-8"
-
 ### ❌ "Issuer/Instrument no existe"
 **Causa**: Los códigos en el archivo no coinciden con los creados
 
