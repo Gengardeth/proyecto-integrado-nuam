@@ -1,0 +1,16 @@
+issuer_codigo|instrument_codigo|rating|valid_from|valid_to|status|risk_level|comments
+ISSUER001|INST001|AAA|2025-01-01|2025-12-31|VIGENTE|BAJO|✓ Fila válida - Empresa con calificación triple A
+ISSUER002|INST002|AA|2025-02-01||VIGENTE|BAJO|✓ Fila válida - Sin fecha de vencimiento
+ISSUER_INEXISTENTE|INST001|BBB|2025-03-01|2026-03-01|VIGENTE|MODERADO|✗ Fila con issuer inexistente
+ISSUER001|INST_INEXISTENTE|BB|2025-04-01|2026-04-01|VIGENTE|ALTO|✗ Fila con instrument inexistente
+ISSUER003|INST003|B|2025-05-01|2025-06-30|VENCIDO|MUY_ALTO|✓ Fila válida - Calificación vencida
+ISSUER001|INST001|ZZZ|2025-06-01|2026-06-01|VIGENTE|BAJO|✗ Fila con rating inválido (ZZZ no existe)
+ISSUER002|INST002|A|INVALID_DATE|2025-12-31|VIGENTE|BAJO|✗ Fila con fecha inválida en valid_from
+ISSUER004|INST004|AA|2025-07-01|2025-06-01|VIGENTE|MODERADO|✗ Fila con valid_to anterior a valid_from
+ISSUER001|INST002|AAA|2025-08-01|2025-09-30|VIGENTE|BAJO|✓ Fila válida - Empresa Financiera Alpha
+ISSUER003|INST003|CCC|2025-09-01||SUSPENDIDO|MUY_ALTO|✓ Fila válida - Sin status default, con suspensión
+ISSUER002|INST001|BBB|2025-10-01|2026-10-31|VIGENTE|MODERADO|✓ Fila válida - Banco Beta con bonos senior
+ISSUER004|INST004|AA|2025-11-01||VIGENTE|ALTO|✗ Issuer004 no existe en BD (debe fallar)
+ISSUER001|INST001|A|2025-12-01|2025-12-31|VIGENTE|BAJO|✓ Fila válida - Últimas calificaciones del año
+ISSUER001|INST003|AA|2025-01-15|2025-12-15|VIGENTE|MODERADO|✓ Fila válida - Instrumento 3 de ISSUER001
+ISSUER002|INST002|BBB|2025-02-20|2026-02-20|VIGENTE|BAJO|✓ Fila válida - Bonos subordinados

@@ -131,7 +131,11 @@ const CargaMasiva = () => {
   const _handleProcesar = async (id) => {
     if (!window.confirm('¿Procesar esta carga?')) return;
     try {
-      await bulkUploadsService.procesar(id);
+      const response = await bulkUploadsService.procesar(id);
+      // Actualizar la card de resultado si es la carga actual
+      if (resultado && resultado.id === id) {
+        setResultado(response.data);
+      }
       fetchUploads();
     } catch (err) {
       console.error('Error procesando carga:', err);

@@ -4,36 +4,77 @@ Esta guía te ayuda a probar la funcionalidad de carga masiva en el sistema NUAM
 
 ## Archivos de Prueba Disponibles
 
-Se proporcionan dos archivos de ejemplo listos para usar:
+Se proporcionan varios archivos de ejemplo listos para usar:
 
 ### 1. `test_carga_masiva.txt` (Formato TSV - Tabulaciones)
 - **Ubicación**: `docs/bulk_upload_examples/test_carga_masiva.txt`
 - **Delimitador**: Tabulaciones (invisible en el editor, pero el formato es correcto)
-- **Contenido**: 10 registros de prueba con diferentes combinaciones de datos
+- **Contenido**: 10 registros válidos de prueba
+- **Uso**: Probar el flujo normal de carga exitosa
 - **Ventaja**: Compatible con Excel y herramientas de hojas de cálculo
 
 ### 2. `test_carga_masiva_pipes.txt` (Formato Pipes)
 - **Ubicación**: `docs/bulk_upload_examples/test_carga_masiva_pipes.txt`
 - **Delimitador**: Pipes (|) - visible y fácil de editar
 - **Contenido**: Los mismos 10 registros en formato pipes
+- **Uso**: Probar ambos delimitadores (tabulaciones y pipes)
 - **Ventaja**: Más fácil de leer y editar manualmente
 
-## Datos de Prueba Incluidos
+### 3. `test_carga_masiva_mixta.txt` (Formato TSV - Datos Mezclados) ⭐ NUEVO
+- **Ubicación**: `docs/bulk_upload_examples/test_carga_masiva_mixta.txt`
+- **Delimitador**: Tabulaciones
+- **Contenido**: 15 registros con datos VÁLIDOS e INVÁLIDOS
+- **Uso**: Probar validación, errores y manejo de filas mixtas
+- **Ventaja**: Prueba completa del sistema de validación
+- **Esperado**: Aprox. 10 filas OK, 5 filas Error
 
-Los archivos contienen 10 registros para probar diferentes escenarios:
+### 4. `test_carga_masiva_mixta_pipes.txt` (Formato Pipes - Datos Mezclados) ⭐ NUEVO
+- **Ubicación**: `docs/bulk_upload_examples/test_carga_masiva_mixta_pipes.txt`
+- **Delimitador**: Pipes (|)
+- **Contenido**: Los mismos 15 registros en formato pipes
+- **Uso**: Probar validación con delimitador pipes
+- **Ventaja**: Más legible para revisar qué debe fallar
 
-| Issuer | Instrumento | Rating | Status | Risk Level | Caso de Uso |
-|--------|-------------|--------|--------|-----------|------------|
-| ISSUER001 | INST001 | AAA | VIGENTE | BAJO | ✓ Caso base exitoso |
-| ISSUER001 | INST002 | AA | VIGENTE | BAJO | ✓ Sin fecha vencimiento |
-| ISSUER002 | INST001 | BBB | VIGENTE | MODERADO | ✓ Grado inversión |
-| ISSUER002 | INST003 | BB | VIGENTE | ALTO | ✓ Especulativo |
-| ISSUER003 | INST002 | B | VENCIDO | MUY_ALTO | ✓ Estado vencido |
-| ISSUER003 | INST004 | CCC | SUSPENDIDO | MUY_ALTO | ✓ Estado suspendido |
-| ISSUER004 | INST001 | A | VIGENTE | BAJO | ✓ Grado inversión |
-| ISSUER004 | INST003 | AA | VIGENTE | BAJO | ✓ Empresa calidad |
-| ISSUER005 | INST002 | D | CANCELADO | MUY_ALTO | ✓ Estado cancelado |
-| ISSUER001 | INST004 | AAA | VIGENTE | MUY_BAJO | ✓ Nuevo instrumento |
+## Datos de Prueba en Archivos Base
+
+Los archivos `test_carga_masiva.txt` y `test_carga_masiva_pipes.txt` contienen 10 registros válidos:
+
+| # | Issuer | Instrumento | Rating | Status | Risk Level | Descripción |
+|---|--------|-------------|--------|--------|-----------|------------|
+| 1 | ISSUER001 | INST001 | AAA | VIGENTE | BAJO | ✓ Caso base exitoso |
+| 2 | ISSUER001 | INST002 | AA | VIGENTE | BAJO | ✓ Sin fecha vencimiento |
+| 3 | ISSUER002 | INST001 | BBB | VIGENTE | MODERADO | ✓ Grado inversión |
+| 4 | ISSUER002 | INST003 | BB | VIGENTE | ALTO | ✓ Especulativo |
+| 5 | ISSUER003 | INST002 | B | VENCIDO | MUY_ALTO | ✓ Estado vencido |
+| 6 | ISSUER003 | INST004 | CCC | SUSPENDIDO | MUY_ALTO | ✓ Estado suspendido |
+| 7 | ISSUER004 | INST001 | A | VIGENTE | BAJO | ✓ Grado inversión |
+| 8 | ISSUER004 | INST003 | AA | VIGENTE | BAJO | ✓ Empresa calidad |
+| 9 | ISSUER005 | INST002 | D | CANCELADO | MUY_ALTO | ✓ Estado cancelado |
+| 10 | ISSUER001 | INST004 | AAA | VIGENTE | MUY_BAJO | ✓ Nuevo instrumento |
+
+## Datos de Prueba en Archivo Mixto
+
+El archivo `test_carga_masiva_mixta.txt` contiene 15 registros para validar manejo de errores:
+
+| # | Issuer | Instrumento | Rating | Motivo | Esperado |
+|---|--------|-------------|--------|--------|----------|
+| 1 | ISSUER001 | INST001 | AAA | Válido - Empresa/Instrumento existentes | ✓ OK |
+| 2 | ISSUER002 | INST002 | AA | Válido - Sin fecha vencimiento | ✓ OK |
+| 3 | ISSUER_INEXISTENTE | INST001 | BBB | Issuer no existe en BD | ✗ ERROR |
+| 4 | ISSUER001 | INST_INEXISTENTE | BB | Instrumento no existe en BD | ✗ ERROR |
+| 5 | ISSUER003 | INST003 | B | Válido - Status VENCIDO | ✓ OK |
+| 6 | ISSUER001 | INST001 | ZZZ | Rating inválido (no es AAA/AA/A/etc) | ✗ ERROR |
+| 7 | ISSUER002 | INST002 | A | Fecha inválida en valid_from (INVALID_DATE) | ✗ ERROR |
+| 8 | ISSUER004 | INST004 | AA | valid_to anterior a valid_from | ✗ ERROR |
+| 9 | ISSUER001 | INST002 | AAA | Válido - Empresa Financiera | ✓ OK |
+| 10 | ISSUER003 | INST003 | CCC | Válido - Status SUSPENDIDO | ✓ OK |
+| 11 | ISSUER002 | INST001 | BBB | Válido - Banco Beta | ✓ OK |
+| 12 | ISSUER004 | INST004 | AA | Issuer004 no existe | ✗ ERROR |
+| 13 | ISSUER001 | INST001 | A | Válido - Última del año | ✓ OK |
+| 14 | ISSUER001 | INST003 | AA | Válido - Instrumento 3 | ✓ OK |
+| 15 | ISSUER002 | INST002 | BBB | Válido - Bonos subordinados | ✓ OK |
+
+**Resumen Esperado**: 10 OK, 5 ERROR (66.7% éxito)
 
 ## Cómo Hacer Testing
 
@@ -46,11 +87,12 @@ Asegúrate de que existan los siguientes registros en la BD:
 **Instruments:**
 - INST001, INST002, INST003, INST004
 
-Si no existen, crea los siguientes registros:
-1. Ve a **Emisores** → **+ Nuevo Issuer**
-2. Ve a **Instrumentos** → **+ Nuevo Instrumento**
+Si no existen, utiliza el script incluido:
+```bash
+python create_test_data.py
+```
 
-O utiliza el admin de Django:
+O manualmente en Django shell:
 ```bash
 python manage.py shell
 ```
@@ -70,7 +112,7 @@ instruments = ['INST001', 'INST002', 'INST003', 'INST004']
 for code in instruments:
     Instrument.objects.get_or_create(
         codigo=code,
-        defaults={'nombre': f'Instrumento {code}', 'tipo': 'BONO'}
+        defaults={'nombre': f'Instrumento {code}'}
     )
 ```
 
@@ -81,28 +123,43 @@ for code in instruments:
 
 ### Paso 3: Subir Archivo de Prueba
 1. Descarga uno de los archivos de prueba:
-   - Recomendado: `test_carga_masiva.txt` (TSV)
-   - Alternativa: `test_carga_masiva_pipes.txt` (Pipes)
+   - **Para prueba simple**: `test_carga_masiva.txt`
+   - **Para prueba de validación**: `test_carga_masiva_mixta.txt` (recomendado)
 2. Sube el archivo en la sección de carga masiva
-3. Se debería crear una carga con estado **PENDIENTE**
+3. Verifica que aparezca el preview con el **Total de filas correcto**
 
 ### Paso 4: Procesar la Carga
-1. En el historial de cargas, busca tu carga (estado PENDIENTE)
-2. Haz clic en el botón **Procesar**
-3. Espera a que se procese (debería ser rápido con 10 registros)
+1. En el preview "Carga Registrada", haz clic en **▶️ Procesar Carga**
+2. Espera a que se procese
+3. Se actualizará automáticamente con los resultados
 
 ### Paso 5: Revisar Resultados
-Deberías ver un resumen similar a este:
+
+**Para archivo simple (test_carga_masiva.txt)**:
 ```
-Total de ítems: 10
-Exitosos: 10 (100%)
-Con error: 0 (0%)
+Total filas: 10
+Filas OK: 10
+Filas Error: 0
+Éxito %: 100%
 ```
 
-### Paso 6: Verificar en Calificaciones
+**Para archivo mixto (test_carga_masiva_mixta.txt)**:
+```
+Total filas: 15
+Filas OK: 10
+Filas Error: 5
+Éxito %: 66.67%
+```
+
+### Paso 6: Ver Detalle de Errores
+1. En la tabla de cargas, haz clic en el ícono de **detalles** (👁️)
+2. Se mostrarán todas las filas con sus estados
+3. Las filas con ERROR mostrarán el mensaje de validación
+
+### Paso 7: Verificar en Calificaciones
 1. Ve a **Calificaciones**
 2. Busca por issuer o instrumento para ver los registros creados
-3. Verifica que los datos se importaron correctamente
+3. Verifica que solo las filas válidas se importaron
 
 ## Casos de Prueba Adicionales
 
