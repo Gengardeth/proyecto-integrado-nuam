@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import { issuersAPI } from '../../services/api';
 import '../../styles/SharedCRUD.css';
 
 const IssuerForm = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { id } = useParams();
   const isEdit = !!id;
+  const isAdmin = user?.rol === 'ADMIN';
 
   const [formData, setFormData] = useState({
     codigo: '',
@@ -33,10 +36,17 @@ const IssuerForm = () => {
   }, [id]);
 
   useEffect(() => {
+    // Solo ADMIN puede acceder a este formulario
+    if (!isAdmin) {
+      alert('No tienes permiso para acceder a esta página. Solo administradores pueden crear o editar emisores.');
+      navigate('/emisores');
+      return;
+    }
+
     if (isEdit) {
       fetchIssuer();
     }
-  }, [isEdit, fetchIssuer]);
+  }, [isEdit, fetchIssuer, isAdmin, navigate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

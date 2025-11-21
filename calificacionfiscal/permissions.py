@@ -33,9 +33,9 @@ class IsAuthenticatedWithRole(permissions.BasePermission):
 class TaxRatingPermission(permissions.BasePermission):
     """
     Permiso personalizado para TaxRating según el rol:
-    - ADMIN: full CRUD
-    - ANALISTA: CRUD (create, read, update, delete)
-    - AUDITOR: solo lectura
+    - ADMIN: full CRUD (crear, leer, actualizar, eliminar)
+    - ANALISTA: solo lectura (GET)
+    - AUDITOR: solo lectura (GET)
     """
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -43,20 +43,16 @@ class TaxRatingPermission(permissions.BasePermission):
         
         user = request.user
         
-        # Si el usuario no tiene rol asignado, permitir acceso como ANALISTA por defecto
+        # Si el usuario no tiene rol asignado, rechazar
         if not hasattr(user, 'rol') or not user.rol:
-            return True
+            return False
         
         # ADMIN puede todo
         if user.rol == 'ADMIN':
             return True
         
-        # ANALISTA puede CRUD
-        if user.rol == 'ANALISTA':
-            return True
-        
-        # AUDITOR solo puede leer
-        if user.rol == 'AUDITOR':
+        # ANALISTA y AUDITOR: solo pueden leer (GET, HEAD, OPTIONS)
+        if user.rol in ['ANALISTA', 'AUDITOR']:
             return request.method in permissions.SAFE_METHODS
         
         return False
@@ -72,15 +68,8 @@ class TaxRatingPermission(permissions.BasePermission):
         if user.rol == 'ADMIN':
             return True
         
-        # ANALISTA puede modificar sus propias calificaciones
-        if user.rol == 'ANALISTA':
-            if request.method in permissions.SAFE_METHODS:
-                return True
-            # Puede editar/eliminar solo las que creó
-            return obj.analista == user
-        
-        # AUDITOR solo lectura
-        if user.rol == 'AUDITOR':
+        # ANALISTA y AUDITOR: solo lectura
+        if user.rol in ['ANALISTA', 'AUDITOR']:
             return request.method in permissions.SAFE_METHODS
         
         return False
@@ -89,7 +78,8 @@ class TaxRatingPermission(permissions.BasePermission):
 class BulkUploadPermission(permissions.BasePermission):
     """
     Permiso para cargas masivas:
-    - ADMIN y ANALISTA: pueden subir archivos
+    - ADMIN: puede subir archivos y procesar cargas
+    - ANALISTA: solo lectura
     - AUDITOR: solo lectura
     """
     def has_permission(self, request, view):
@@ -98,14 +88,16 @@ class BulkUploadPermission(permissions.BasePermission):
         
         user = request.user
         
-        # Si el usuario no tiene rol, permitir acceso
+        # Si el usuario no tiene rol, rechazar
         if not hasattr(user, 'rol') or not user.rol:
+            return False
+        
+        # ADMIN puede hacer todo (POST, PUT, DELETE, etc.)
+        if user.rol == 'ADMIN':
             return True
         
-        if user.rol in ['ADMIN', 'ANALISTA']:
-            return True
-        
-        if user.rol == 'AUDITOR':
+        # ANALISTA y AUDITOR: solo pueden leer (GET, HEAD, OPTIONS)
+        if user.rol in ['ANALISTA', 'AUDITOR']:
             return request.method in permissions.SAFE_METHODS
         
         return False
@@ -152,15 +144,19 @@ class AuditLogPermission(permissions.BasePermission):
 
 class ReportPermission(permissions.BasePermission):
     """
-    ADMIN y ANALISTA pueden generar reportes.
-    AUDITOR solo puede ver.
+    Permisos para reportes:
+    - ADMIN, ANALISTA y AUDITOR: solo pueden ver/descargar reportes (GET)
     """
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
         
-        # Si el usuario no tiene rol, permitir acceso
+        # Si el usuario no tiene rol, rechazar
         if not hasattr(request.user, 'rol') or not request.user.rol:
-            return True
+            return False
+        
+        # Solo lectura para todos los roles
+        if request.method not in permissions.SAFE_METHODS:
+            return False
         
         return request.user.rol in ['ADMIN', 'ANALISTA', 'AUDITOR']

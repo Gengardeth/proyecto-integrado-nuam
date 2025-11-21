@@ -1,0 +1,5 @@
+issuer_codigo|instrument_codigo|rating|valid_from|valid_to|status|risk_level|comments
+ISSUER001|INST001|AAA|2025-01-01|2025-12-31|VIGENTE|BAJO|Calificación excelente
+ISSUER002|INST002|BB|2025-01-15||VIGENTE|ALTO|Sin fecha de vencimiento definida
+ISSUER003|INST003|A|2025-02-01|2026-01-31|VIGENTE|MODERADO|Calificación estable
+ISSUER001|INST003|BBB|2025-03-01||SUSPENDIDO|MODERADO|Bajo revisión

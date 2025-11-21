@@ -1,0 +1,1 @@
+issuer_codigo|instrument_codigo|rating|valid_from|valid_to|status|risk_level|comments

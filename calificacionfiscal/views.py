@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.utils import timezone
 from django.http import HttpResponse
+from django.core.exceptions import ValidationError
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -29,8 +30,11 @@ class TaxRatingPagination(PageNumberPagination):
 class TaxRatingViewSet(viewsets.ModelViewSet):
     """
     ViewSet para TaxRating (Calificaciones Tributarias).
-    Permite CRUD completo con filtros por issuer, instrument, fecha y más.
-    Permisos según rol: ADMIN (full), ANALISTA (CRUD), AUDITOR (solo lectura).
+    
+    Permisos según rol:
+    - ADMIN: full CRUD (crear, leer, actualizar, eliminar)
+    - ANALISTA: solo lectura (ver calificaciones)
+    - AUDITOR: solo lectura (ver calificaciones)
     """
     queryset = TaxRating.objects.select_related('issuer', 'instrument', 'analista').all()
     authentication_classes = [CsrfExemptSessionAuthentication]
@@ -52,6 +56,11 @@ class TaxRatingViewSet(viewsets.ModelViewSet):
         """Asigna automáticamente el usuario actual como analista y registra en auditoría."""
         from cuentas.audit_models import AuditLog
         
+        # Verificar permiso explícitamente
+        user_rol = getattr(self.request.user, 'rol', None)
+        if user_rol != 'ADMIN':
+            raise PermissionError("No tiene los privilegios para realizar esta acción. Solo administradores pueden crear calificaciones.")
+        
         tax_rating = serializer.save(analista=self.request.user)
         
         # Registrar en auditoría
@@ -72,6 +81,11 @@ class TaxRatingViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         """Actualiza y registra en auditoría."""
         from cuentas.audit_models import AuditLog
+        
+        # Verificar permiso explícitamente
+        user_rol = getattr(self.request.user, 'rol', None)
+        if user_rol != 'ADMIN':
+            raise PermissionError("No tiene los privilegios para realizar esta acción. Solo administradores pueden editar calificaciones.")
         
         instance = self.get_object()
         datos_anterior = {
@@ -103,6 +117,11 @@ class TaxRatingViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         """Elimina y registra en auditoría."""
         from cuentas.audit_models import AuditLog
+        
+        # Verificar permiso explícitamente
+        user_rol = getattr(self.request.user, 'rol', None)
+        if user_rol != 'ADMIN':
+            raise PermissionError("No tiene los privilegios para realizar esta acción. Solo administradores pueden eliminar calificaciones.")
         
         AuditLog.objects.create(
             usuario=self.request.user,
@@ -204,7 +223,8 @@ class TaxRatingViewSet(viewsets.ModelViewSet):
 class BulkUploadViewSet(viewsets.ModelViewSet):
     """
     ViewSet para gestionar cargas masivas de TaxRatings.
-    Permite subir archivos CSV/XLSX y consultar el estado del procesamiento.
+    Permite subir archivos UTF-8 (.txt, .tsv) y consultar el estado del procesamiento.
+    Rechaza archivos CSV y XLSX.
     Permisos: ADMIN y ANALISTA pueden subir, AUDITOR solo lectura.
     """
     queryset = BulkUpload.objects.select_related('usuario').all()
@@ -220,14 +240,36 @@ class BulkUploadViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """
-        Crea el registro de BulkUpload y determina el tipo de archivo.
+        Crea el registro de BulkUpload validando que sea archivo UTF-8.
+        Solo acepta archivos de texto plano en UTF-8, rechaza CSV, XLSX, XLS.
         El procesamiento se hace de forma asíncrona o con comando management.
         """
         from cuentas.audit_models import AuditLog
         
         archivo = self.request.FILES.get('archivo')
-        tipo = 'XLSX' if archivo.name.endswith(('.xlsx', '.xls')) else 'CSV'
-        bulk_upload = serializer.save(usuario=self.request.user, tipo=tipo)
+        
+        # Rechazar extensiones no permitidas
+        archivo_name = archivo.name.lower()
+        extensiones_rechazadas = ['.xlsx', '.xls', '.csv']
+        
+        for ext in extensiones_rechazadas:
+            if archivo_name.endswith(ext):
+                raise ValidationError(
+                    f"Formato no soportado: {ext}. Solo se aceptan archivos de texto UTF-8 (.txt, .tsv, etc.)"
+                )
+        
+        # Validar que sea un archivo UTF-8 válido
+        try:
+            contenido = archivo.read()
+            contenido.decode('utf-8')
+            archivo.seek(0)  # Resetear el puntero para que se guarde correctamente
+        except UnicodeDecodeError:
+            raise ValidationError(
+                "El archivo no está en formato UTF-8 válido. Asegúrese de guardar el archivo con codificación UTF-8."
+            )
+        
+        # Guardar como tipo UTF8
+        bulk_upload = serializer.save(usuario=self.request.user, tipo='UTF8')
         
         # Registrar en auditoría
         AuditLog.objects.create(
@@ -314,6 +356,42 @@ class BulkUploadViewSet(viewsets.ModelViewSet):
                 {'error': f'Error al procesar archivo: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    @action(detail=True, methods=['post'])
+    def rechazar(self, request, pk=None):
+        """
+        Rechaza/cancela una carga masiva pendiente.
+        Solo es posible si el estado es PENDIENTE.
+        """
+        from cuentas.audit_models import AuditLog
+        
+        bulk_upload = self.get_object()
+        
+        if bulk_upload.estado != 'PENDIENTE':
+            return Response(
+                {'error': f'No se puede rechazar una carga en estado {bulk_upload.estado}. Solo las pendientes pueden rechazarse.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Cambiar a RECHAZADO
+        bulk_upload.estado = 'RECHAZADO'
+        bulk_upload.fecha_fin = timezone.now()
+        bulk_upload.save()
+        
+        # Registrar en auditoría
+        AuditLog.objects.create(
+            usuario=request.user,
+            accion='DELETE',
+            modelo='BulkUpload',
+            object_id=str(bulk_upload.id),
+            descripcion=f'Carga masiva rechazada/cancelada por el usuario'
+        )
+        
+        serializer = self.get_serializer(bulk_upload)
+        return Response({
+            'mensaje': 'Carga masiva rechazada correctamente',
+            'carga': serializer.data
+        })
     
     @action(detail=False, methods=['get'])
     def resumen(self, request):

@@ -1,61 +1,64 @@
 """
-Utilidades para procesar cargas masivas de archivos CSV/XLSX.
+Utilidades para procesar cargas masivas de archivos UTF-8.
+Los archivos deben ser texto plano en formato UTF-8, con datos separados por pipes (|) o tabulaciones.
 """
 import csv
-import openpyxl
 from datetime import datetime
 from django.core.exceptions import ValidationError
 from parametros.models import Issuer, Instrument
 
 
-def parse_csv_file(file_path):
+def parse_utf8_file(file_path):
     """
-    Parsea un archivo CSV y retorna las filas.
+    Parsea un archivo de texto UTF-8 y retorna las filas.
+    
+    El archivo debe tener:
+    - Primera fila: headers separados por pipes (|) o tabulaciones
+    - Filas siguientes: datos separados por el mismo delimitador
     
     Args:
-        file_path: Ruta al archivo CSV
+        file_path: Ruta al archivo UTF-8
         
     Returns:
         list: Lista de diccionarios con los datos de cada fila
+        
+    Raises:
+        ValidationError: Si el archivo no es UTF-8 válido o está mal formado
     """
     rows = []
     try:
-        with open(file_path, 'r', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for idx, row in enumerate(reader, start=2):  # Fila 1 es el header
-                rows.append({'numero_fila': idx, 'datos': row})
-    except Exception as e:
-        raise ValidationError(f"Error al leer archivo CSV: {str(e)}")
-    
-    return rows
-
-
-def parse_xlsx_file(file_path):
-    """
-    Parsea un archivo XLSX y retorna las filas.
-    
-    Args:
-        file_path: Ruta al archivo XLSX
-        
-    Returns:
-        list: Lista de diccionarios con los datos de cada fila
-    """
-    rows = []
-    try:
-        workbook = openpyxl.load_workbook(file_path, read_only=True)
-        sheet = workbook.active
-        
-        # Obtener headers de la primera fila
-        headers = [cell.value for cell in sheet[1]]
-        
-        # Procesar filas
-        for idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
-            row_data = dict(zip(headers, row))
-            rows.append({'numero_fila': idx, 'datos': row_data})
+        with open(file_path, 'r', encoding='utf-8') as file:
+            # Detectar delimitador
+            first_line = file.readline().strip()
+            if '|' in first_line:
+                delimiter = '|'
+            elif '\t' in first_line:
+                delimiter = '\t'
+            else:
+                raise ValidationError(
+                    "El archivo debe tener headers separados por pipes (|) o tabulaciones"
+                )
             
-        workbook.close()
+            # Volver al inicio del archivo
+            file.seek(0)
+            
+            # Leer con CSV reader
+            reader = csv.DictReader(file, delimiter=delimiter)
+            
+            if reader.fieldnames is None:
+                raise ValidationError("El archivo no tiene headers válidos")
+            
+            for idx, row in enumerate(reader, start=2):  # Fila 1 es el header
+                # Limpiar espacios en blanco de las claves y valores
+                cleaned_row = {k.strip(): (v.strip() if v else '') for k, v in row.items()}
+                rows.append({'numero_fila': idx, 'datos': cleaned_row})
+                
+    except UnicodeDecodeError as e:
+        raise ValidationError(
+            f"El archivo no está en formato UTF-8 válido: {str(e)}"
+        )
     except Exception as e:
-        raise ValidationError(f"Error al leer archivo XLSX: {str(e)}")
+        raise ValidationError(f"Error al leer archivo UTF-8: {str(e)}")
     
     return rows
 
@@ -132,7 +135,7 @@ def validate_tax_rating_row(row_data):
 
 def process_bulk_upload_file(bulk_upload):
     """
-    Procesa un archivo de carga masiva y crea los items correspondientes.
+    Procesa un archivo UTF-8 de carga masiva y crea los items correspondientes.
     
     Args:
         bulk_upload: Instancia de BulkUpload
@@ -145,13 +148,8 @@ def process_bulk_upload_file(bulk_upload):
     
     file_path = bulk_upload.archivo.path
     
-    # Parsear archivo según tipo
-    if bulk_upload.tipo == 'CSV':
-        rows = parse_csv_file(file_path)
-    elif bulk_upload.tipo == 'XLSX':
-        rows = parse_xlsx_file(file_path)
-    else:
-        raise ValidationError(f"Tipo de archivo no soportado: {bulk_upload.tipo}")
+    # Parsear archivo UTF-8
+    rows = parse_utf8_file(file_path)
     
     total_filas = len(rows)
     filas_ok = 0

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import { instrumentsAPI } from '../../services/api';
 import '../../styles/SharedCRUD.css';
 
 const InstrumentsList = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.rol === 'ADMIN';
   const [instruments, setInstruments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -60,10 +63,11 @@ const InstrumentsList = () => {
     <div className="crud-container">
       <div className="crud-header">
         <h1>Instrumentos</h1>
-        <button className="btn-primary" onClick={() => navigate('/instrumentos/nuevo')}>
-          + Nuevo Instrumento
-        </button>
-      </div>
+        {isAdmin && (
+          <button className="btn-primary" onClick={() => navigate('/instrumentos/nuevo')}>
+            + Nuevo Instrumento
+          </button>
+        )}
 
       <div className="search-bar">
         <input
@@ -109,21 +113,26 @@ const InstrumentsList = () => {
                     </span>
                   </td>
                   <td className="actions-cell">
-                    <button
-                      className="btn-action btn-edit"
-                      onClick={() => navigate(`/instrumentos/${inst.id}/editar`)}
-                      title="Editar"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className="btn-action btn-delete"
-                      onClick={() => handleDelete(inst.id)}
-                      title="Eliminar"
-                    >
-                      🗑️
-                    </button>
+                    {isAdmin && (
+                      <>
+                        <button
+                          className="btn-action btn-edit"
+                          onClick={() => navigate(`/instrumentos/${inst.id}/editar`)}
+                          title="Editar"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="btn-action btn-delete"
+                          onClick={() => handleDelete(inst.id)}
+                          title="Eliminar"
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    )}
                   </td>
+                </tr>
                 </tr>
               ))
             )}

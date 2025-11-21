@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import ratingsService from '../../services/ratings';
 import issuersService from '../../services/issuers';
 import instrumentsService from '../../services/instruments';
@@ -8,8 +9,10 @@ import '../../styles/Calificaciones.css';
 
 const CalificacionForm = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { id } = useParams();
   const isEdit = !!id;
+  const isAdmin = user?.rol === 'ADMIN';
 
   const [formData, setFormData] = useState({
     issuer: '',
@@ -50,12 +53,19 @@ const CalificacionForm = () => {
   }, [id]);
 
   useEffect(() => {
+    // Solo ADMIN puede acceder a este formulario
+    if (!isAdmin) {
+      alert('No tienes permiso para acceder a esta página. Solo administradores pueden crear o editar calificaciones.');
+      navigate('/calificaciones');
+      return;
+    }
+
     fetchIssuers();
     fetchInstruments();
     if (isEdit) {
       fetchCalificacion();
     }
-  }, [fetchCalificacion, isEdit]);
+  }, [fetchCalificacion, isEdit, isAdmin, navigate]);
 
   useEffect(() => {
     // Sin relación directa entre Instrument e Issuer, mostramos todos

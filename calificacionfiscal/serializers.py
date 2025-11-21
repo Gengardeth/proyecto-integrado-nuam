@@ -133,13 +133,26 @@ class BulkUploadSerializer(serializers.ModelSerializer):
         )
     
     def validate_archivo(self, value):
-        """Validar que el archivo sea CSV o XLSX."""
-        if not value.name.endswith(('.csv', '.xlsx', '.xls')):
-            raise serializers.ValidationError("Solo se permiten archivos CSV o XLSX")
+        """Validar que el archivo sea UTF-8 (.txt, .tsv)."""
+        if not value.name.endswith(('.txt', '.tsv')):
+            raise serializers.ValidationError(
+                "Solo se permiten archivos de texto UTF-8 (.txt, .tsv). No se aceptan CSV o XLSX."
+            )
         
         # Validar tamaño (max 10MB)
         if value.size > 10 * 1024 * 1024:
             raise serializers.ValidationError("El archivo no puede superar los 10MB")
+        
+        # Validar que sea UTF-8 válido
+        try:
+            value.read()
+            value.seek(0)
+            value.read().decode('utf-8')
+            value.seek(0)
+        except UnicodeDecodeError:
+            raise serializers.ValidationError(
+                "El archivo no está en formato UTF-8 válido. Asegúrese de guardar con codificación UTF-8."
+            )
         
         return value
 

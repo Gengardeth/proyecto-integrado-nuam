@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import ratingsService from '../../services/ratings';
 import { formatDate } from '../../utils/dateFormat';
 import { RATING_STATUS_LABELS } from '../../utils/constants';
@@ -7,6 +8,8 @@ import '../../styles/Calificaciones.css';
 
 const CalificacionesList = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.rol === 'ADMIN';
   const [calificaciones, setCalificaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -98,13 +101,14 @@ const CalificacionesList = () => {
     <div className="calificaciones-container">
       <div className="calificaciones-header">
         <h1>Calificaciones Fiscales</h1>
-        <button 
-          className="btn-primary"
-          onClick={() => navigate('/calificaciones/nueva')}
-        >
-          + Nueva Calificación
-        </button>
-      </div>
+        {isAdmin && (
+          <button 
+            className="btn-primary"
+            onClick={() => navigate('/calificaciones/nueva')}
+          >
+            + Nueva Calificación
+          </button>
+        )}
 
       {/* Filtros */}
       <div className="filters-section">
@@ -212,20 +216,24 @@ const CalificacionesList = () => {
                     >
                       👁️
                     </button>
-                    <button
-                      className="btn-action btn-edit"
-                      onClick={() => navigate(`/calificaciones/${calif.id}/editar`)}
-                      title="Editar"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className="btn-action btn-delete"
-                      onClick={() => handleDelete(calif.id)}
-                      title="Eliminar"
-                    >
-                      🗑️
-                    </button>
+                    {isAdmin && (
+                      <>
+                        <button
+                          className="btn-action btn-edit"
+                          onClick={() => navigate(`/calificaciones/${calif.id}/editar`)}
+                          title="Editar"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="btn-action btn-delete"
+                          onClick={() => handleDelete(calif.id)}
+                          title="Eliminar"
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))

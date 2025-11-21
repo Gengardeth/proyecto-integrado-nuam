@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import ratingsService from '../../services/ratings';
 import { formatDate } from '../../utils/dateFormat';
 import { RATING_STATUS_LABELS } from '../../utils/constants';
@@ -7,7 +8,9 @@ import '../../styles/Calificaciones.css';
 
 const CalificacionDetail = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { id } = useParams();
+  const isAdmin = user?.rol === 'ADMIN';
   const [calificacion, setCalificacion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -78,18 +81,22 @@ const CalificacionDetail = () => {
           >
             ← Volver
           </button>
-          <button 
-            className="btn-primary"
-            onClick={() => navigate(`/calificaciones/${id}/editar`)}
-          >
-            ✏️ Editar
-          </button>
-          <button 
-            className="btn-danger"
-            onClick={handleDelete}
-          >
-            🗑️ Eliminar
-          </button>
+          {isAdmin && (
+            <>
+              <button 
+                className="btn-primary"
+                onClick={() => navigate(`/calificaciones/${id}/editar`)}
+              >
+                ✏️ Editar
+              </button>
+              <button 
+                className="btn-danger"
+                onClick={handleDelete}
+              >
+                🗑️ Eliminar
+              </button>
+            </>
+          )}
         </div>
       </div>
 

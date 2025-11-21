@@ -1,5 +1,6 @@
 """
 Comando Django para procesar cargas masivas pendientes.
+Solo procesa archivos UTF-8.
 Uso: python manage.py process_uploads
 """
 from django.core.management.base import BaseCommand
@@ -9,7 +10,7 @@ from calificacionfiscal.utils import process_bulk_upload_file
 
 
 class Command(BaseCommand):
-    help = 'Procesa cargas masivas pendientes de archivos CSV/XLSX'
+    help = 'Procesa cargas masivas pendientes de archivos UTF-8'
 
     def add_arguments(self, parser):
         parser.add_argument(

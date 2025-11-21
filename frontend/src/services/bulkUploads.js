@@ -14,6 +14,7 @@ export const bulkUploadsService = {
   }),
   items: (id, estado) => api.get(`/bulk-uploads/${id}/items/`, { params: estado ? { estado } : {} }),
   procesar: (id) => api.post(`/bulk-uploads/${id}/procesar/`),
+  rechazar: (id) => api.post(`/bulk-uploads/${id}/rechazar/`),
   resumenPropio: () => api.get('/bulk-uploads/resumen/'),
 };
 

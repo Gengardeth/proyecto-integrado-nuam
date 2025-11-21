@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import bulkUploadsService from '../services/bulkUploads';
 import ratingsService from '../services/ratings';
 import '../styles/CargaMasiva.css';
 
 const CargaMasiva = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.rol === 'ADMIN';
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -67,13 +70,12 @@ const CargaMasiva = () => {
   };
 
   const handleFileSelection = (selectedFile) => {
-    const validTypes = [
-      'text/csv',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ];
-    if (!validTypes.includes(selectedFile.type) && !selectedFile.name.match(/\.(csv|xlsx|xls)$/i)) {
-      setError('Formato no válido. Solo CSV o Excel (.xlsx, .xls)');
+    // Validar que sea archivo de texto UTF-8
+    const validTypes = ['text/plain', 'text/tab-separated-values'];
+    const validExtensions = /\.(txt|tsv)$/i;
+    
+    if (!validTypes.includes(selectedFile.type) && !validExtensions.test(selectedFile.name)) {
+      setError('Formato no válido. Solo se aceptan archivos de texto UTF-8 (.txt, .tsv)');
       return;
     }
     if (selectedFile.size > 10 * 1024 * 1024) {
@@ -137,6 +139,17 @@ const CargaMasiva = () => {
     }
   };
 
+  const _handleRechazar = async (id) => {
+    if (!window.confirm('¿Rechazar esta carga? No se podrá procesar después.')) return;
+    try {
+      await bulkUploadsService.rechazar(id);
+      fetchUploads();
+    } catch (err) {
+      console.error('Error rechazando carga:', err);
+      alert('Error rechazando carga');
+    }
+  };
+
   const _handleVerItems = async (upload) => {
     setSelectedUpload(upload);
     setLoadingItems(true);
@@ -159,9 +172,17 @@ const CargaMasiva = () => {
     <div className="carga-masiva-container" style={fadeInStyle}>
       <div className="carga-header">
         <h1>Carga Masiva</h1>
-        <p className="subtitle">Importa múltiples calificaciones desde CSV / Excel</p>
+        <p className="subtitle">Importa múltiples calificaciones desde archivos UTF-8 (TXT, TSV)</p>
       </div>
 
+      {!isAdmin && (
+        <div className="info-message" style={{ padding: '20px', backgroundColor: '#e3f2fd', border: '1px solid #2196F3', borderRadius: '4px', marginBottom: '20px' }}>
+          <p>ℹ️ Solo los administradores pueden subir archivos. Aquí puedes ver el historial de cargas.</p>
+        </div>
+      )}
+
+      {isAdmin && (
+        <>
       {/* ...existing code... */}
       <div className="upload-card">
         <div
@@ -182,11 +203,11 @@ const CargaMasiva = () => {
               <input
                 id="file-upload"
                 type="file"
-                accept=".csv,.xlsx,.xls"
+                accept=".txt,.tsv"
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
               />
-              <p className="file-hint">Formatos: CSV, XLSX • Máx 10MB</p>
+              <p className="file-hint">Formatos: TXT, TSV • Máx 10MB</p>
             </>
           ) : (
             <>
@@ -299,7 +320,10 @@ const CargaMasiva = () => {
                     <td>
                       <button className="btn-mini" onClick={() => _handleVerItems(upload)} title="Ver detalles">👁️</button>
                       {upload.estado === 'PENDIENTE' && (
-                        <button className="btn-mini" onClick={() => _handleProcesar(upload.id)} title="Procesar">▶️</button>
+                        <>
+                          <button className="btn-mini" onClick={() => _handleProcesar(upload.id)} title="Procesar">▶️</button>
+                          <button className="btn-mini btn-danger" onClick={() => _handleRechazar(upload.id)} title="Rechazar">✖️</button>
+                        </>
                       )}
                     </td>
                   </tr>
@@ -363,7 +387,8 @@ const CargaMasiva = () => {
         <h2>📋 Instrucciones</h2>
         <div className="instructions-content">
           <ul className="instructions-list">
-            <li>Formatos soportados: CSV o Excel (.xlsx, .xls). Tamaño máx 10MB.</li>
+            <li>Formatos soportados: Texto UTF-8 (.txt, .tsv). Tamaño máx 10MB.</li>
+            <li>Delimitador: Pipes <code>|</code> o tabulaciones. Primera línea debe ser headers.</li>
             <li>Encabezados requeridos: <code>issuer_codigo</code>, <code>instrument_codigo</code>, <code>rating</code>, <code>valid_from</code>.</li>
             <li>Campos opcionales: <code>valid_to</code>, <code>status</code>, <code>risk_level</code>, <code>comments</code>.</li>
             <li>Valores válidos:
@@ -374,9 +399,11 @@ const CargaMasiva = () => {
             <li><code>valid_from</code> y <code>valid_to</code> usan formato YYYY-MM-DD. Si se indica <code>valid_to</code>, debe ser posterior.</li>
             <li>Los códigos de emisor e instrumento deben existir previamente en el sistema.</li>
           </ul>
-          <p className="mini-text">Consulta la documentación del formato en <code>docs/UPLOAD_FORMAT.md</code> dentro del repositorio.</p>
+          <p className="mini-text">Consulta la documentación del formato en <code>docs/UPLOAD_FORMAT.md</code> dentro del repositorio para ver ejemplos.</p>
         </div>
       </div>
+        </>
+      )}
 
       {/* Footer */}
       <footer className="carga-footer">

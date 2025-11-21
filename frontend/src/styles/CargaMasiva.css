@@ -546,6 +546,14 @@
   transform: scale(1.2);
 }
 
+.btn-mini.btn-danger {
+  color: #c53030;
+}
+
+.btn-mini.btn-danger:hover {
+  color: #742a2a;
+}
+
 /* Panel de items */
 .items-panel {
   margin-top: 1.5rem;

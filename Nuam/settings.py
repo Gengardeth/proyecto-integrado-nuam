@@ -76,6 +76,7 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
+    'EXCEPTION_HANDLER': 'Nuam.exceptions.custom_exception_handler',
 }
 
 # JWT Settings (Simple JWT)

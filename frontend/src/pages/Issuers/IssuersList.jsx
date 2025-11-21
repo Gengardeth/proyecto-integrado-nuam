@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import { issuersAPI } from '../../services/api';
 import '../../styles/SharedCRUD.css';
 
 const IssuersList = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.rol === 'ADMIN';
   const [issuers, setIssuers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -60,10 +63,11 @@ const IssuersList = () => {
     <div className="crud-container">
       <div className="crud-header">
         <h1>Issuers</h1>
-        <button className="btn-primary" onClick={() => navigate('/emisores/nuevo')}>
-          + Nuevo Issuer
-        </button>
-      </div>
+        {isAdmin && (
+          <button className="btn-primary" onClick={() => navigate('/emisores/nuevo')}>
+            + Nuevo Issuer
+          </button>
+        )}
 
       <div className="search-bar">
         <input
@@ -109,21 +113,26 @@ const IssuersList = () => {
                     </span>
                   </td>
                   <td className="actions-cell">
-                    <button
-                      className="btn-action btn-edit"
-                      onClick={() => navigate(`/emisores/${issuer.id}/editar`)}
-                      title="Editar"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className="btn-action btn-delete"
-                      onClick={() => handleDelete(issuer.id)}
-                      title="Eliminar"
-                    >
-                      🗑️
-                    </button>
+                    {isAdmin && (
+                      <>
+                        <button
+                          className="btn-action btn-edit"
+                          onClick={() => navigate(`/emisores/${issuer.id}/editar`)}
+                          title="Editar"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="btn-action btn-delete"
+                          onClick={() => handleDelete(issuer.id)}
+                          title="Eliminar"
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    )}
                   </td>
+                </tr>
                 </tr>
               ))
             )}

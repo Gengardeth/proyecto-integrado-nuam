@@ -87,19 +87,19 @@ class TaxRating(models.Model):
 
 class BulkUpload(models.Model):
     """
-    Modelo para gestionar cargas masivas de datos desde archivos CSV/XLSX.
+    Modelo para gestionar cargas masivas de datos desde archivos UTF-8.
     Registra el estado del proceso y resultados.
     """
     ESTADO_CHOICES = [
         ('PENDIENTE', 'Pendiente'),
         ('PROCESANDO', 'Procesando'),
         ('COMPLETADO', 'Completado'),
+        ('RECHAZADO', 'Rechazado'),
         ('ERROR', 'Error'),
     ]
     
     TIPO_CHOICES = [
-        ('CSV', 'CSV'),
-        ('XLSX', 'XLSX'),
+        ('UTF8', 'UTF-8'),
     ]
     
     archivo = models.FileField(upload_to='bulk_uploads/%Y/%m/%d/')

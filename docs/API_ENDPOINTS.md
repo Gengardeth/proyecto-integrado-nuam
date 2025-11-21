@@ -130,6 +130,11 @@ Authorization: Bearer <access_token>
 
 ## Calificaciones Tributarias
 
+> **Permisos**:
+> - `ADMIN`: Lectura y escritura completa (CREATE, READ, UPDATE, DELETE)
+> - `ANALISTA`: Solo lectura (READ)
+> - `AUDITOR`: Solo lectura (READ)
+
 ### Listar Calificaciones
 
 Obtener lista de calificaciones con paginación y filtros.
@@ -243,10 +248,10 @@ Content-Type: application/json
     "fecha_vigencia": ["La fecha de vigencia no puede ser pasada."]
   }
   ```
-- `403 Forbidden`: Sin permisos (requiere rol ANALISTA o superior)
+- `403 Forbidden`: Sin permisos (requiere rol ADMIN)
 - `404 Not Found`: Instrumento no existe
 
-**Permisos**: `IsAnalistaOrAbove`
+**Permisos**: `TaxRatingPermission` (requiere rol ADMIN)
 
 ---
 
@@ -447,7 +452,7 @@ Authorization: Bearer <access_token>
 
 ### Subir Archivo
 
-Subir archivo CSV o XLSX para carga masiva.
+Subir archivo UTF-8 para carga masiva.
 
 ```http
 POST /api/v1/bulk-uploads/
@@ -457,26 +462,27 @@ Content-Type: multipart/form-data
 
 **Request Body** (FormData):
 ```
-archivo: <file>  (CSV o XLSX)
+archivo: <file>  (UTF-8 .txt o .tsv)
 ```
 
-**Formato CSV Esperado**:
-```csv
-codigo_instrumento,rating,outlook,fecha_vigencia,fecha_revision,comentarios
-INST001,AAA,STABLE,2025-12-01,2026-06-01,Primera calificación
-INST002,AA,POSITIVE,2025-12-15,2026-06-15,Mejora en indicadores
+**Formato Esperado (con pipes)**:
+```
+issuer_codigo|instrument_codigo|rating|valid_from|valid_to|status|risk_level|comments
+ISSUER001|INST001|AAA|2025-01-01|2025-12-31|VIGENTE|BAJO|Calificación positiva
+ISSUER002|INST002|BB|2025-01-15||VIGENTE|ALTO|Sin fecha de vencimiento
 ```
 
 **Response** (201 Created):
 ```json
 {
-  "id": "uuid-nuevo",
-  "archivo": "/media/uploads/ratings_2025_11_17.csv",
+  "id": 1,
+  "archivo": "/media/bulk_uploads/2025/11/17/ejemplo.txt",
+  "tipo": "UTF8",
   "estado": "PENDIENTE",
   "total_filas": 0,
-  "exitosas": 0,
-  "fallidas": 0,
-  "created_by": { ... },
+  "filas_ok": 0,
+  "filas_error": 0,
+  "usuario_username": "admin",
   "created_at": "2025-11-17T10:00:00Z"
 }
 ```

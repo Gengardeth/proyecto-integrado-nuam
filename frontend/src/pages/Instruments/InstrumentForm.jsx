@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { instrumentsAPI, issuersAPI } from '../../services/api';
+import { useAuth } from '../../hooks/useAuth';
+import { instrumentsAPI } from '../../services/api';
 import '../../styles/SharedCRUD.css';
 
 const InstrumentForm = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { id } = useParams();
   const isEdit = !!id;
+  const isAdmin = user?.rol === 'ADMIN';
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -50,11 +53,18 @@ const InstrumentForm = () => {
   }, [id]);
 
   useEffect(() => {
+    // Solo ADMIN puede acceder a este formulario
+    if (!isAdmin) {
+      alert('No tienes permiso para acceder a esta página. Solo administradores pueden crear o editar instrumentos.');
+      navigate('/instrumentos');
+      return;
+    }
+
     fetchIssuers();
     if (isEdit) {
       fetchInstrument();
     }
-  }, [isEdit, fetchIssuers, fetchInstrument]);
+  }, [isEdit, fetchIssuers, fetchInstrument, isAdmin, navigate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
