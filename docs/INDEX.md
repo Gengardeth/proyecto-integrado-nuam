@@ -62,6 +62,33 @@ Navegación completa de toda la documentación del proyecto.
 
 ---
 
+## 🧪 Testing Integral (NUEVO)
+
+Directorio: **[docs/](./)**
+
+| Documento | Descripción | Contenido |
+|-----------|-------------|----------|
+| **[PLAN_INTEGRAL_TESTING.md](./PLAN_INTEGRAL_TESTING.md)** | 📋 Plan completo de testing | Estrategia, pirámide de tests, cobertura 85%, 6 casos de prueba, CI/CD |
+| **[TESTING_API_REST.md](./TESTING_API_REST.md)** | 🔌 Testing de APIs REST | 22 tests de API, autenticación, CRUD, validación, manejo de errores |
+| **[TESTING.md](./TESTING.md)** | 🎨 Testing Frontend | 77 tests con Vitest |
+| **[bulk_upload_examples/TESTING_GUIDE.md](./bulk_upload_examples/TESTING_GUIDE.md)** | 📤 Testing de Carga Masiva | 6 archivos de prueba (10-1000 filas), stress testing |
+
+**Cobertura de Testing**:
+- ✅ Backend: 85% (pytest-django)
+- ✅ Frontend: 100% componentes críticos (Vitest)
+- ✅ API REST: 22 tests de endpoints
+- ✅ Carga Masiva: Tests con 1000 filas
+- ✅ Seguridad: OWASP ZAP
+- ✅ Rendimiento: Locust
+
+**Ideal para**:
+- QA Engineers
+- Developers escribiendo tests
+- DevOps configurando CI/CD
+- Presentaciones de calidad
+
+---
+
 ## 📅 Resúmenes de Sprints
 
 Directorio: **[docs/sprints/](./sprints/)**
