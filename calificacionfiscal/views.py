@@ -271,6 +271,19 @@ class BulkUploadViewSet(viewsets.ModelViewSet):
         # Guardar como tipo UTF8
         bulk_upload = serializer.save(usuario=self.request.user, tipo='UTF8')
         
+        # Hacer un parsing preliminar para mostrar preview
+        try:
+            from .utils import parse_utf8_file
+            archivo.seek(0)
+            rows = parse_utf8_file(archivo)
+            # Actualizar con el conteo preliminar
+            bulk_upload.total_filas = len(rows)
+            bulk_upload.save()
+        except Exception as e:
+            # Si falla el parsing preliminar, no es un error fatal
+            # Se intentará de nuevo cuando se procese
+            pass
+        
         # Registrar en auditoría
         AuditLog.objects.create(
             usuario=self.request.user,
