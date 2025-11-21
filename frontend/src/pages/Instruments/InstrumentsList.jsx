@@ -68,6 +68,7 @@ const InstrumentsList = () => {
             + Nuevo Instrumento
           </button>
         )}
+      </div>
 
       <div className="search-bar">
         <input
