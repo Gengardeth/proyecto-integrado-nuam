@@ -108,11 +108,12 @@ class AuditLogSerializer(serializers.ModelSerializer):
 class AuditLogListSerializer(serializers.ModelSerializer):
     """Serializer simplificado para listados de auditoría."""
     usuario_username = serializers.CharField(source='usuario.username', read_only=True, allow_null=True)
+    usuario_rol = serializers.CharField(source='usuario.rol', read_only=True, allow_null=True)
     accion_display = serializers.CharField(source='get_accion_display', read_only=True)
     
     class Meta:
         model = AuditLog
         fields = (
-            'id', 'usuario_username', 'accion', 'accion_display', 
+            'id', 'usuario', 'usuario_username', 'usuario_rol', 'accion', 'accion_display', 
             'modelo', 'descripcion', 'creado_en'
         )

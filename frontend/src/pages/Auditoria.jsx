@@ -245,7 +245,7 @@ const Auditoria = () => {
                   <td className="fecha-col">{formatDate(log.creado_en)}</td>
                   <td className="usuario-col">
                     <div>
-                      <strong>{log.usuario?.username || 'N/A'}</strong>
+                      <strong>{log.usuario_username || 'Sistema'}</strong>
                       {log.usuario_rol && <div style={{ fontSize: '0.85em', color: '#666' }}>{log.usuario_rol}</div>}
                     </div>
                   </td>
@@ -283,7 +283,7 @@ const Auditoria = () => {
                         <strong className="timeline-action">{log.accion}</strong>
                         <span className="timeline-time">{new Date(log.creado_en).toLocaleTimeString('es-CL')}</span>
                       </div>
-                      <p className="timeline-user">👤 {log.usuario?.username || 'Sistema'} {log.usuario_rol && <span style={{ fontSize: '0.85em', color: '#666' }}>({log.usuario_rol})</span>}</p>
+                      <p className="timeline-user">👤 {log.usuario_username || 'Sistema'} {log.usuario_rol && <span style={{ fontSize: '0.85em', color: '#666' }}>({log.usuario_rol})</span>}</p>
                       <p className="timeline-description">{log.descripcion || 'Sin descripción'}</p>
                       {log.modelo && <p className="timeline-model">📋 {log.modelo}</p>}
                     </div>
