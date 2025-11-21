@@ -1,0 +1,11 @@
+issuer_codigo	instrument_codigo	rating	valid_from	valid_to	status	risk_level	comments
+ISSUER001	INST001	AAA	2025-01-01	2025-12-31	VIGENTE	BAJO	Empresa con calificación triple A
+ISSUER001	INST002	AA	2025-01-15		VIGENTE	BAJO	Segunda emisión sin fecha de vencimiento
+ISSUER002	INST001	BBB	2025-02-01	2026-01-31	VIGENTE	MODERADO	Calificación de grado inversión
+ISSUER002	INST003	BB	2025-03-01		VIGENTE	ALTO	Calificación especulativa
+ISSUER003	INST002	B	2025-01-01	2025-06-30	VENCIDO	MUY_ALTO	Calificación vencida
+ISSUER003	INST004	CCC	2025-02-15		SUSPENDIDO	MUY_ALTO	Calificación suspendida
+ISSUER004	INST001	A	2025-04-01	2026-03-31	VIGENTE	BAJO	Calificación de grado inversión superior
+ISSUER004	INST003	AA	2025-05-01		VIGENTE	BAJO	Empresa estable
+ISSUER005	INST002	D	2025-01-01	2025-03-31	CANCELADO	MUY_ALTO	Calificación cancelada
+ISSUER001	INST004	AAA	2025-06-01	2026-05-31	VIGENTE	MUY_BAJO	Nuevo instrumento de ISSUER001

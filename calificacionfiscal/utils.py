@@ -3,12 +3,16 @@ Utilidades para procesar cargas masivas de archivos UTF-8.
 Los archivos deben ser texto plano en formato UTF-8, con datos separados por pipes (|) o tabulaciones.
 """
 import csv
+import io
+import logging
 from datetime import datetime
 from django.core.exceptions import ValidationError
 from parametros.models import Issuer, Instrument
 
+logger = logging.getLogger(__name__)
 
-def parse_utf8_file(file_path):
+
+def parse_utf8_file(file_obj):
     """
     Parsea un archivo de texto UTF-8 y retorna las filas.
     
@@ -17,7 +21,7 @@ def parse_utf8_file(file_path):
     - Filas siguientes: datos separados por el mismo delimitador
     
     Args:
-        file_path: Ruta al archivo UTF-8
+        file_obj: Objeto FileField de Django o archivo abierto o ruta string
         
     Returns:
         list: Lista de diccionarios con los datos de cada fila
@@ -26,38 +30,103 @@ def parse_utf8_file(file_path):
         ValidationError: Si el archivo no es UTF-8 válido o está mal formado
     """
     rows = []
+    content = None
+    
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            # Detectar delimitador
-            first_line = file.readline().strip()
-            if '|' in first_line:
-                delimiter = '|'
-            elif '\t' in first_line:
-                delimiter = '\t'
+        # Obtener contenido según el tipo de input
+        if isinstance(file_obj, str):
+            # Es una ruta de archivo
+            logger.info(f"Leyendo archivo desde ruta: {file_obj}")
+            with open(file_obj, 'r', encoding='utf-8') as f:
+                content = f.read()
+        else:
+            # Es un objeto FileField/File de Django
+            logger.info(f"Leyendo archivo desde FileField: {getattr(file_obj, 'name', 'unknown')}")
+            try:
+                file_obj.seek(0)  # Ir al inicio del archivo
+            except:
+                pass
+            
+            # Intentar leer
+            try:
+                data = file_obj.read()
+            except:
+                # Si read() sin argumentos no funciona, abrir el file
+                file_obj.open('r')
+                data = file_obj.read()
+            
+            # Convertir a string si es bytes
+            if isinstance(data, bytes):
+                logger.info("Contenido es bytes, decodificando a UTF-8")
+                content = data.decode('utf-8')
             else:
-                raise ValidationError(
-                    "El archivo debe tener headers separados por pipes (|) o tabulaciones"
-                )
-            
-            # Volver al inicio del archivo
-            file.seek(0)
-            
-            # Leer con CSV reader
-            reader = csv.DictReader(file, delimiter=delimiter)
-            
-            if reader.fieldnames is None:
-                raise ValidationError("El archivo no tiene headers válidos")
-            
-            for idx, row in enumerate(reader, start=2):  # Fila 1 es el header
-                # Limpiar espacios en blanco de las claves y valores
-                cleaned_row = {k.strip(): (v.strip() if v else '') for k, v in row.items()}
-                rows.append({'numero_fila': idx, 'datos': cleaned_row})
-                
+                content = data
+        
+        if not content or len(content.strip()) == 0:
+            raise ValidationError("El archivo está vacío")
+        
+        logger.info(f"Contenido leído, {len(content)} caracteres")
+        logger.info(f"Primeros 200 caracteres: {repr(content[:200])}")
+        
+        # Dividir en líneas
+        lines = content.split('\n')
+        logger.info(f"Total de líneas: {len(lines)}")
+        
+        if len(lines) < 2:
+            raise ValidationError("El archivo debe tener al menos un header y una fila de datos")
+        
+        # Detectar delimitador desde la primera línea
+        first_line = lines[0].strip()
+        logger.info(f"Primera línea (stripped): {repr(first_line)}")
+        
+        if not first_line:
+            raise ValidationError("La primera línea (headers) está vacía")
+        
+        # Determinar delimitador
+        delimiter = None
+        if '|' in first_line:
+            delimiter = '|'
+            logger.info("Delimitador detectado: pipe (|)")
+        elif '\t' in first_line:
+            delimiter = '\t'
+            logger.info("Delimitador detectado: tabulación")
+        else:
+            logger.error(f"No se detectó delimitador en: {repr(first_line)}")
+            raise ValidationError(
+                "El archivo debe tener headers separados por pipes (|) o tabulaciones"
+            )
+        
+        # Usar StringIO para leer como archivo CSV
+        file_stream = io.StringIO(content)
+        
+        # Leer con CSV reader
+        reader = csv.DictReader(file_stream, delimiter=delimiter)
+        
+        if reader.fieldnames is None:
+            raise ValidationError("El archivo no tiene headers válidos")
+        
+        logger.info(f"Headers encontrados: {reader.fieldnames}")
+        
+        # Parsear filas
+        for idx, row in enumerate(reader, start=2):  # Fila 1 es el header
+            # Limpiar espacios en blanco de las claves y valores
+            cleaned_row = {k.strip(): (v.strip() if v else '') for k, v in row.items()}
+            rows.append({'numero_fila': idx, 'datos': cleaned_row})
+            logger.debug(f"Fila {idx} parseada: {cleaned_row}")
+        
+        logger.info(f"✓ Total filas parseadas exitosamente: {len(rows)}")
+        
+    except ValidationError:
+        raise
     except UnicodeDecodeError as e:
+        logger.error(f"Error de codificación UTF-8: {str(e)}")
         raise ValidationError(
             f"El archivo no está en formato UTF-8 válido: {str(e)}"
         )
     except Exception as e:
+        logger.error(f"Error inesperado al leer archivo: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise ValidationError(f"Error al leer archivo UTF-8: {str(e)}")
     
     return rows
@@ -136,20 +205,22 @@ def validate_tax_rating_row(row_data):
 def process_bulk_upload_file(bulk_upload):
     """
     Procesa un archivo UTF-8 de carga masiva y crea los items correspondientes.
-    
+
     Args:
         bulk_upload: Instancia de BulkUpload
-        
+
     Returns:
         dict: Resumen del procesamiento
     """
     from .models import BulkUploadItem, TaxRating
     from parametros.models import Issuer, Instrument
+
+    logger.info(f"Iniciando procesamiento de BulkUpload {bulk_upload.id}: {bulk_upload.archivo.name}")
     
-    file_path = bulk_upload.archivo.path
+    # Parsear archivo UTF-8 - pasar el FileField directamente
+    rows = parse_utf8_file(bulk_upload.archivo)
     
-    # Parsear archivo UTF-8
-    rows = parse_utf8_file(file_path)
+    logger.info(f"Se parsearon {len(rows)} filas del archivo")
     
     total_filas = len(rows)
     filas_ok = 0
@@ -161,10 +232,13 @@ def process_bulk_upload_file(bulk_upload):
         numero_fila = row['numero_fila']
         row_data = row['datos']
         
+        logger.info(f"Procesando fila {numero_fila}: {row_data}")
+        
         # Validar fila
         es_valido, errores = validate_tax_rating_row(row_data)
         
         if es_valido:
+            logger.info(f"Fila {numero_fila} válida, creando TaxRating")
             try:
                 # Crear TaxRating
                 issuer = Issuer.objects.get(codigo=row_data['issuer_codigo'])
@@ -199,8 +273,10 @@ def process_bulk_upload_file(bulk_upload):
                     datos=row_data
                 )
                 filas_ok += 1
+                logger.info(f"Fila {numero_fila} procesada exitosamente")
                 
             except Exception as e:
+                logger.error(f"Error al procesar fila {numero_fila}: {str(e)}")
                 # Error al crear
                 BulkUploadItem.objects.create(
                     bulk_upload=bulk_upload,
@@ -213,6 +289,7 @@ def process_bulk_upload_file(bulk_upload):
                 resumen_errores[numero_fila] = str(e)
         else:
             # Validación fallida
+            logger.warning(f"Fila {numero_fila} falló validación: {errores}")
             mensaje_error = '; '.join(errores)
             BulkUploadItem.objects.create(
                 bulk_upload=bulk_upload,
@@ -223,6 +300,8 @@ def process_bulk_upload_file(bulk_upload):
             )
             filas_error += 1
             resumen_errores[numero_fila] = mensaje_error
+    
+    logger.info(f"Procesamiento completado: {filas_ok} OK, {filas_error} ERROR, Total: {total_filas}")
     
     return {
         'total_filas': total_filas,
