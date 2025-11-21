@@ -133,7 +133,6 @@ const InstrumentsList = () => {
                     )}
                   </td>
                 </tr>
-                </tr>
               ))
             )}
           </tbody>

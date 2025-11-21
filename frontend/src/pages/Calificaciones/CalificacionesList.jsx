@@ -109,6 +109,7 @@ const CalificacionesList = () => {
             + Nueva Calificación
           </button>
         )}
+      </div>
 
       {/* Filtros */}
       <div className="filters-section">

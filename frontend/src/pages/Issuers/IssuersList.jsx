@@ -133,7 +133,6 @@ const IssuersList = () => {
                     )}
                   </td>
                 </tr>
-                </tr>
               ))
             )}
           </tbody>
