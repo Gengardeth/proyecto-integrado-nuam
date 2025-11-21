@@ -68,6 +68,7 @@ const IssuersList = () => {
             + Nuevo Issuer
           </button>
         )}
+      </div>
 
       <div className="search-bar">
         <input
