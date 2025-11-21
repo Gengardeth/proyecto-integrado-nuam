@@ -275,6 +275,18 @@ const CargaMasiva = () => {
             </div>
           </div>
           <div className="result-actions">
+            {resultado.estado === 'PENDIENTE' && (
+              <button 
+                className="btn-primary" 
+                onClick={async () => {
+                  await _handleProcesar(resultado.id);
+                  setResultado(null);
+                }}
+                style={{ marginRight: '10px' }}
+              >
+                ▶️ Procesar Carga
+              </button>
+            )}
             <button className="btn-primary" onClick={handleReset}>📂 Nueva Carga</button>
           </div>
         </div>
