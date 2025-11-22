@@ -322,8 +322,10 @@ const CargaMasiva = () => {
           </div>
         </div>
       )}
+        </>
+      )}
 
-      {/* ...existing code... */}
+      {/* Cargas Recientes - visible para todos los usuarios */}
       <div className="uploads-card">
         <div className="uploads-header">
           <h2>Cargas Recientes</h2>
@@ -364,13 +366,15 @@ const CargaMasiva = () => {
                     <td>{new Date(upload.creado_en).toLocaleDateString()}</td>
                     <td>
                       <button className="btn-mini" onClick={() => _handleVerItems(upload)} title="Ver detalles">👁️</button>
-                      {upload.estado === 'PENDIENTE' && (
+                      {upload.estado === 'PENDIENTE' && isAdmin && (
                         <>
                           <button className="btn-mini" onClick={() => _handleProcesar(upload.id)} title="Procesar">▶️</button>
                           <button className="btn-mini btn-danger" onClick={() => _handleRechazar(upload.id)} title="Rechazar">✖️</button>
                         </>
                       )}
-                      <button className="btn-mini btn-danger" onClick={() => _handleEliminarCarga(upload)} title="Eliminar carga">🗑️</button>
+                      {isAdmin && (
+                        <button className="btn-mini btn-danger" onClick={() => _handleEliminarCarga(upload)} title="Eliminar carga">🗑️</button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -492,8 +496,6 @@ const CargaMasiva = () => {
           </ul>
         </div>
       </div>
-        </>
-      )}
 
       {/* Footer */}
       <footer className="carga-footer">
