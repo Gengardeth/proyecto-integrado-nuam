@@ -13,13 +13,24 @@ const fadeInStyle = {
 };
 
 const Reportes = () => {
-  const [filters, setFilters] = useState({
+  // Filtros temporales (en el formulario)
+  const [tempFilters, setTempFilters] = useState({
     fecha_desde: '',
     fecha_hasta: '',
     status: '',
     issuer_id: '',
     instrument_id: ''
   });
+
+  // Filtros activos (aplicados a la búsqueda)
+  const [activeFilters, setActiveFilters] = useState({
+    fecha_desde: '',
+    fecha_hasta: '',
+    status: '',
+    issuer_id: '',
+    instrument_id: ''
+  });
+
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState(null);
   const [rawData, setRawData] = useState([]);
@@ -44,17 +55,28 @@ const Reportes = () => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setTempFilters(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleGenerate = async () => {
+  const handleApplyFilters = async () => {
     try {
       setLoading(true);
+      setActiveFilters(tempFilters);
+      
+      // Preparar filtros para la API
+      const apiFilters = {};
+      if (tempFilters.fecha_desde) apiFilters.valid_from_range_after = tempFilters.fecha_desde;
+      if (tempFilters.fecha_hasta) apiFilters.valid_from_range_before = tempFilters.fecha_hasta;
+      if (tempFilters.status) apiFilters.status = tempFilters.status;
+      if (tempFilters.issuer_id) apiFilters.issuer_id = tempFilters.issuer_id;
+      if (tempFilters.instrument_id) apiFilters.instrument_id = tempFilters.instrument_id;
+
       // Estadísticas agregadas
-      const statsResp = await reportsService.estadisticas(filters);
+      const statsResp = await reportsService.estadisticas(apiFilters);
       setStats(statsResp.data);
-      // Recuperar datos sin paginar usando ratingsService con filtros básicos (solo para demostración)
-      const listResp = await ratingsService.list({ page_size: 200, ...filters });
+      
+      // Recuperar datos sin paginar usando ratingsService con filtros básicos
+      const listResp = await ratingsService.list({ page_size: 200, ...apiFilters });
       const lista = listResp.data.results || listResp.data;
       setRawData(lista);
     } catch (err) {
@@ -65,11 +87,27 @@ const Reportes = () => {
     }
   };
 
+  const handleClearFilters = () => {
+    const emptyFilters = { fecha_desde: '', fecha_hasta: '', status: '', issuer_id: '', instrument_id: '' };
+    setTempFilters(emptyFilters);
+    setActiveFilters(emptyFilters);
+    setStats(null);
+    setRawData([]);
+  };
+
   const handleExport = async (tipo) => {
     try {
       setExporting(true);
+      // Preparar filtros para la API
+      const apiFilters = {};
+      if (activeFilters.fecha_desde) apiFilters.valid_from_range_after = activeFilters.fecha_desde;
+      if (activeFilters.fecha_hasta) apiFilters.valid_from_range_before = activeFilters.fecha_hasta;
+      if (activeFilters.status) apiFilters.status = activeFilters.status;
+      if (activeFilters.issuer_id) apiFilters.issuer_id = activeFilters.issuer_id;
+      if (activeFilters.instrument_id) apiFilters.instrument_id = activeFilters.instrument_id;
+
       const servicio = tipo === 'csv' ? reportsService.exportCSV : reportsService.exportPDF;
-      const resp = await servicio(filters);
+      const resp = await servicio(apiFilters);
       const blob = new Blob([resp.data], { type: tipo === 'csv' ? 'text/csv' : 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -104,7 +142,7 @@ const Reportes = () => {
               type="date"
               id="fecha_desde"
               name="fecha_desde"
-              value={filters.fecha_desde}
+              value={tempFilters.fecha_desde}
               onChange={handleFilterChange}
               className="filter-input"
             />
@@ -115,7 +153,7 @@ const Reportes = () => {
               type="date"
               id="fecha_hasta"
               name="fecha_hasta"
-              value={filters.fecha_hasta}
+              value={tempFilters.fecha_hasta}
               onChange={handleFilterChange}
               className="filter-input"
             />
@@ -125,7 +163,7 @@ const Reportes = () => {
             <select
               id="status"
               name="status"
-              value={filters.status}
+              value={tempFilters.status}
               onChange={handleFilterChange}
               className="filter-select"
             >
@@ -140,7 +178,7 @@ const Reportes = () => {
             <select
               id="issuer_id"
               name="issuer_id"
-              value={filters.issuer_id}
+              value={tempFilters.issuer_id}
               onChange={handleFilterChange}
               className="filter-select"
             >
@@ -155,7 +193,7 @@ const Reportes = () => {
             <select
               id="instrument_id"
               name="instrument_id"
-              value={filters.instrument_id}
+              value={tempFilters.instrument_id}
               onChange={handleFilterChange}
               className="filter-select"
             >
@@ -168,18 +206,19 @@ const Reportes = () => {
         </div>
         <div className="filter-actions">
           <button
-            className="btn-secondary"
-            onClick={() => setFilters({ fecha_desde: '', fecha_hasta: '', status: '', issuer_id: '', instrument_id: '' })}
-          >
-            Limpiar Filtros
-          </button>
-          <button
             className="btn-primary"
-            onClick={handleGenerate}
+            onClick={handleApplyFilters}
             disabled={loading}
             style={loading ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
           >
-            {loading ? 'Generando...' : '📊 Generar Reporte'}
+            {loading ? 'Generando...' : '🔍 Generar Reporte'}
+          </button>
+          <button
+            className="btn-secondary"
+            onClick={handleClearFilters}
+            disabled={loading}
+          >
+            🗑️ Limpiar Filtros
           </button>
         </div>
       </div>
