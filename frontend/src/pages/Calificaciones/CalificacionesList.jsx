@@ -6,6 +6,7 @@ import { formatDate } from '../../utils/dateFormat';
 import { RATING_STATUS_LABELS } from '../../utils/constants';
 import '../../styles/Calificaciones.css';
 
+// Version: Fixed filters
 const CalificacionesList = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
