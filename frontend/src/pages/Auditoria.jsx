@@ -7,13 +7,25 @@ const Auditoria = () => {
   const [logs, setLogs] = useState([]);
   const [grouped, setGrouped] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
+  
+  // Filtros temporales (en el formulario)
+  const [tempFilters, setTempFilters] = useState({
     usuario: '',
     accion: '',
     modelo: '',
     fecha_desde: '',
     fecha_hasta: ''
   });
+
+  // Filtros activos (aplicados a la búsqueda)
+  const [activeFilters, setActiveFilters] = useState({
+    usuario: '',
+    accion: '',
+    modelo: '',
+    fecha_desde: '',
+    fecha_hasta: ''
+  });
+
   const [pagination, setPagination] = useState({
     page: 1,
     pageSize: 20,
@@ -29,11 +41,21 @@ const Auditoria = () => {
         page_size: pagination.pageSize,
       };
       
-      if (filters.usuario) params.search = filters.usuario;
-      if (filters.accion) params.accion = filters.accion;
-      if (filters.modelo) params.modelo = filters.modelo;
-      if (filters.fecha_desde) params.fecha_desde = filters.fecha_desde;
-      if (filters.fecha_hasta) params.fecha_hasta = filters.fecha_hasta;
+      if (activeFilters.usuario && activeFilters.usuario.trim()) {
+        params.search = activeFilters.usuario.trim();
+      }
+      if (activeFilters.accion && activeFilters.accion.trim()) {
+        params.accion = activeFilters.accion.trim();
+      }
+      if (activeFilters.modelo && activeFilters.modelo.trim()) {
+        params.modelo = activeFilters.modelo.trim();
+      }
+      if (activeFilters.fecha_desde && activeFilters.fecha_desde.trim()) {
+        params.creado_en__gte = activeFilters.fecha_desde.trim();
+      }
+      if (activeFilters.fecha_hasta && activeFilters.fecha_hasta.trim()) {
+        params.creado_en__lte = activeFilters.fecha_hasta.trim();
+      }
       
       const response = await auditService.list(params);
       const payload = response.data;
@@ -50,7 +72,7 @@ const Auditoria = () => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.pageSize, filters]);
+  }, [pagination.page, pagination.pageSize, activeFilters]);
 
   useEffect(() => {
     fetchLogs();
@@ -58,12 +80,18 @@ const Auditoria = () => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setTempFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleApplyFilters = () => {
+    setActiveFilters(tempFilters);
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
   const handleClearFilters = () => {
-    setFilters({ usuario: '', accion: '', modelo: '', fecha_desde: '', fecha_hasta: '' });
+    const emptyFilters = { usuario: '', accion: '', modelo: '', fecha_desde: '', fecha_hasta: '' };
+    setTempFilters(emptyFilters);
+    setActiveFilters(emptyFilters);
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
@@ -136,10 +164,7 @@ const Auditoria = () => {
 
       {/* Filtros */}
       <div className="audit-filters-card">
-        <div className="filters-header">
-          <h3>Filtros</h3>
-          <button className="btn-mini" onClick={handleClearFilters} disabled={loading}>🔄 Limpiar</button>
-        </div>
+        <h2>Filtros</h2>
         <div className="filters-grid">
           <div className="filter-group">
             <label htmlFor="usuario">Usuario</label>
@@ -147,7 +172,7 @@ const Auditoria = () => {
               type="text"
               id="usuario"
               name="usuario"
-              value={filters.usuario}
+              value={tempFilters.usuario}
               onChange={handleFilterChange}
               placeholder="Buscar usuario..."
               className="filter-input"
@@ -158,7 +183,7 @@ const Auditoria = () => {
             <select
               id="accion"
               name="accion"
-              value={filters.accion}
+              value={tempFilters.accion}
               onChange={handleFilterChange}
               className="filter-select"
             >
@@ -178,7 +203,7 @@ const Auditoria = () => {
               type="text"
               id="modelo"
               name="modelo"
-              value={filters.modelo}
+              value={tempFilters.modelo}
               onChange={handleFilterChange}
               placeholder="Ej: TaxRating, Issuer..."
               className="filter-input"
@@ -190,7 +215,7 @@ const Auditoria = () => {
               type="date"
               id="fecha_desde"
               name="fecha_desde"
-              value={filters.fecha_desde}
+              value={tempFilters.fecha_desde}
               onChange={handleFilterChange}
               className="filter-input"
             />
@@ -201,7 +226,7 @@ const Auditoria = () => {
               type="date"
               id="fecha_hasta"
               name="fecha_hasta"
-              value={filters.fecha_hasta}
+              value={tempFilters.fecha_hasta}
               onChange={handleFilterChange}
               className="filter-input"
             />
@@ -215,6 +240,22 @@ const Auditoria = () => {
               {viewMode === 'tabla' ? '📊 Tabla' : '📈 Timeline'}
             </button>
           </div>
+        </div>
+        <div className="filter-actions">
+          <button 
+            className="btn-primary"
+            onClick={handleApplyFilters}
+            disabled={loading}
+          >
+            🔍 Buscar
+          </button>
+          <button 
+            className="btn-secondary"
+            onClick={handleClearFilters}
+            disabled={loading}
+          >
+            🗑️ Limpiar
+          </button>
         </div>
       </div>
 
