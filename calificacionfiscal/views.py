@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FormParser
 from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import FilterSet, DateFromToRangeFilter
 from cuentas.authentication import CsrfExemptSessionAuthentication
 from .models import CalificacionTributaria, TaxRating, BulkUpload, BulkUploadItem
 from .serializers import (
@@ -28,7 +29,13 @@ class TaxRatingPagination(PageNumberPagination):
     max_page_size = 100
 
 
-class TaxRatingViewSet(viewsets.ModelViewSet):
+class TaxRatingFilterSet(FilterSet):
+    """FilterSet personalizado para TaxRating con filtros por rango de fechas."""
+    valid_from_range = DateFromToRangeFilter(field_name='valid_from')
+    
+    class Meta:
+        model = TaxRating
+        fields = ['status', 'rating', 'valid_from_range']class TaxRatingViewSet(viewsets.ModelViewSet):
     """
     ViewSet para TaxRating (Calificaciones Tributarias).
     
@@ -41,7 +48,7 @@ class TaxRatingViewSet(viewsets.ModelViewSet):
     authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [permissions.IsAuthenticated, TaxRatingPermission]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'rating', 'valid_from', 'valid_to']
+    filterset_class = TaxRatingFilterSet
     search_fields = ['issuer__nombre', 'issuer__rut', 'instrument__nombre', 'instrument__codigo', 'rating', 'status']
     ordering_fields = ['valid_from', 'creado_en', 'issuer__nombre', 'rating']
     ordering = ['-valid_from']
