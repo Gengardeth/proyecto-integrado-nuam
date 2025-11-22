@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import bulkUploadsService from '../services/bulkUploads';
 import ratingsService from '../services/ratings';
+import api from '../services/httpClient';
 import '../styles/CargaMasiva.css';
 
 const CargaMasiva = () => {
@@ -18,6 +19,8 @@ const CargaMasiva = () => {
     const [_selectedUpload, setSelectedUpload] = useState(null);
   const [_items, setItems] = useState([]);
   const [_loadingItems, setLoadingItems] = useState(false);
+  const [_itemsPage, setItemsPage] = useState(1); // eslint-disable-line no-unused-vars
+  const [_itemsHasMore, setItemsHasMore] = useState(false); // eslint-disable-line no-unused-vars
   // Estadísticas reservadas para futuras mejoras de feedback post-procesamiento
   const [estadisticas, setEstadisticas] = useState(null); // eslint-disable-line no-unused-vars
 
@@ -154,14 +157,31 @@ const CargaMasiva = () => {
     }
   };
 
+  const _handleEliminarCarga = async (upload) => {
+    const confirmMsg = `¿Eliminar esta carga (#${upload.id})?\n\nArchivo: ${upload.archivo}\nTotal filas: ${upload.total_filas}\nEstado: ${upload.estado}\n\nEsta acción es irreversible.`;
+    if (!window.confirm(confirmMsg)) return;
+    try {
+      await api.delete(`/bulk-uploads/${upload.id}/`);
+      fetchUploads();
+    } catch (err) {
+      console.error('Error eliminando carga:', err);
+      alert('Error eliminando carga');
+    }
+  };
+
   const _handleVerItems = async (upload) => {
     setSelectedUpload(upload);
     setLoadingItems(true);
     try {
-      const resp = await bulkUploadsService.items(upload.id);
-      setItems(resp.data.results || resp.data);
+      // Cargar todos los items con page_size grande
+      const resp = await api.get(`/bulk-uploads/${upload.id}/items/`, { 
+        params: { page_size: 10000 } 
+      });
+      const allItems = resp.data.results || resp.data;
+      setItems(Array.isArray(allItems) ? allItems : []);
     } catch (e) {
       console.error('Error cargando items:', e);
+      setItems([]);
     } finally {
       setLoadingItems(false);
     }
@@ -279,18 +299,25 @@ const CargaMasiva = () => {
             </div>
           </div>
           <div className="result-actions">
-            {resultado.estado === 'PENDIENTE' && (
-              <button 
-                className="btn-primary" 
-                onClick={async () => {
-                  await _handleProcesar(resultado.id);
-                  setResultado(null);
-                }}
-                style={{ marginRight: '10px' }}
-              >
-                ▶️ Procesar Carga
-              </button>
-            )}
+            <button 
+              className="btn-primary" 
+              onClick={async () => {
+                await _handleProcesar(resultado.id);
+              }}
+              style={{ marginRight: '10px' }}
+            >
+              ▶️ Procesar Carga
+            </button>
+            <button 
+              className="btn-secondary" 
+              onClick={async () => {
+                await _handleRechazar(resultado.id);
+                setResultado(null);
+              }}
+              style={{ marginRight: '10px' }}
+            >
+              🗑️ Eliminar
+            </button>
             <button className="btn-primary" onClick={handleReset}>📂 Nueva Carga</button>
           </div>
         </div>
@@ -312,6 +339,7 @@ const CargaMasiva = () => {
                   <th>ID</th>
                   <th>Archivo</th>
                   <th>Tipo</th>
+                  <th>Total Filas</th>
                   <th>Estado</th>
                   <th>Filas OK / Error</th>
                   <th>Éxito %</th>
@@ -325,6 +353,7 @@ const CargaMasiva = () => {
                     <td>#{upload.id}</td>
                     <td>{upload.archivo.split('/').pop()}</td>
                     <td>{upload.tipo}</td>
+                    <td className="total-filas"><strong>{upload.total_filas}</strong></td>
                     <td>
                       <span className={`badge badge-${upload.estado.toLowerCase()}`}>
                         {upload.estado}
@@ -341,6 +370,7 @@ const CargaMasiva = () => {
                           <button className="btn-mini btn-danger" onClick={() => _handleRechazar(upload.id)} title="Rechazar">✖️</button>
                         </>
                       )}
+                      <button className="btn-mini btn-danger" onClick={() => _handleEliminarCarga(upload)} title="Eliminar carga">🗑️</button>
                     </td>
                   </tr>
                 ))}
@@ -349,73 +379,117 @@ const CargaMasiva = () => {
           </div>
         )}
         {_selectedUpload && (
-          <div className="items-panel">
-            <div className="items-header">
-              <h3>Items de carga #{_selectedUpload.id}</h3>
-              <button
-                className="btn-mini"
-                onClick={() => {
-                  setSelectedUpload(null);
-                  setItems([]);
-                }}
-              >
-                ✖
-              </button>
-            </div>
-            {_loadingItems ? (
-              <p>Cargando items...</p>
-            ) : _items.length === 0 ? (
-              <p>No hay items para esta carga. Procésala primero.</p>
-            ) : (
-              <div className="items-table-container">
-                <table className="items-table">
-                  <thead>
-                    <tr>
-                      <th>Fila</th>
-                      <th>Estado</th>
-                      <th>Mensaje</th>
-                      <th>Datos</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {_items.map((item) => (
-                      <tr key={item.id} className={`item-${item.estado.toLowerCase()}`}>
-                        <td>{item.numero_fila}</td>
-                        <td>
-                          <span className={`badge badge-${item.estado.toLowerCase()}`}>
-                            {item.estado}
-                          </span>
-                        </td>
-                        <td>{item.mensaje_error || '—'}</td>
-                        <td className="item-data">{JSON.stringify(item.datos).substring(0, 50)}...</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          <div className="items-modal-overlay">
+            <div className="items-modal">
+              <div className="items-header">
+                <div>
+                  <h3>Items de carga #{_selectedUpload.id}</h3>
+                  <p className="items-count">Total: {_items.length} filas</p>
+                </div>
+                <button
+                  className="btn-mini"
+                  onClick={() => {
+                    setSelectedUpload(null);
+                    setItems([]);
+                  }}
+                >
+                  ✖
+                </button>
               </div>
-            )}
+              {_loadingItems ? (
+                <p>Cargando items...</p>
+              ) : _items.length === 0 ? (
+                <p>No hay items para esta carga. Procésala primero.</p>
+              ) : (
+                <div className="items-table-container">
+                  <table className="items-table">
+                    <thead>
+                      <tr>
+                        <th>Fila</th>
+                        <th>Estado</th>
+                        <th>Mensaje</th>
+                        <th>Datos</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {_items.map((item) => (
+                        <tr key={item.id} className={`item-${item.estado.toLowerCase()}`}>
+                          <td>{item.numero_fila}</td>
+                          <td>
+                            <span className={`badge badge-${item.estado.toLowerCase()}`}>
+                              {item.estado}
+                            </span>
+                          </td>
+                          <td className="item-message">{item.mensaje_error || '—'}</td>
+                          <td className="item-data-full">{JSON.stringify(item.datos, null, 2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      {/* ...existing code... */}
+      {/* Instructions Section */}
       <div className="instructions-card">
-        <h2>📋 Instrucciones</h2>
+        <h2>📋 Instrucciones de Carga Masiva</h2>
         <div className="instructions-content">
+          <h3>Formato del Archivo</h3>
           <ul className="instructions-list">
-            <li>Formatos soportados: Texto UTF-8 (.txt, .tsv). Tamaño máx 10MB.</li>
-            <li>Delimitador: Pipes <code>|</code> o tabulaciones. Primera línea debe ser headers.</li>
-            <li>Encabezados requeridos: <code>issuer_codigo</code>, <code>instrument_codigo</code>, <code>rating</code>, <code>valid_from</code>.</li>
-            <li>Campos opcionales: <code>valid_to</code>, <code>status</code>, <code>risk_level</code>, <code>comments</code>.</li>
-            <li>Valores válidos:
-              <br/>rating: AAA, AA, A, BBB, BB, B, CCC, CC, C, D
-              <br/>status: VIGENTE, VENCIDO, SUSPENDIDO, CANCELADO
-              <br/>risk_level: MUY_BAJO, BAJO, MODERADO, ALTO, MUY_ALTO
-            </li>
-            <li><code>valid_from</code> y <code>valid_to</code> usan formato YYYY-MM-DD. Si se indica <code>valid_to</code>, debe ser posterior.</li>
-            <li>Los códigos de emisor e instrumento deben existir previamente en el sistema.</li>
+            <li><strong>Formatos soportados:</strong> Texto UTF-8 (.txt, .tsv). Tamaño máximo 10MB.</li>
+            <li><strong>Delimitador:</strong> Tabulaciones (recomendado) o pipes <code>|</code></li>
+            <li><strong>Primera línea:</strong> Headers (nombres de columnas)</li>
+            <li><strong>Codificación:</strong> UTF-8 obligatorio</li>
           </ul>
-          <p className="mini-text">Consulta la documentación del formato en <code>docs/UPLOAD_FORMAT.md</code> dentro del repositorio para ver ejemplos.</p>
+
+          <h3>Estructura de Columnas</h3>
+          <ul className="instructions-list">
+            <li><strong>Requeridas:</strong>
+              <ul style={{ marginTop: '5px' }}>
+                <li><code>issuer_codigo</code> - Código del emisor (debe existir en el sistema)</li>
+                <li><code>instrument_codigo</code> - Código del instrumento (debe existir en el sistema)</li>
+                <li><code>rating</code> - Calificación del rating</li>
+                <li><code>valid_from</code> - Fecha de vigencia inicial (YYYY-MM-DD)</li>
+              </ul>
+            </li>
+            <li><strong>Opcionales:</strong>
+              <ul style={{ marginTop: '5px' }}>
+                <li><code>valid_to</code> - Fecha de fin de vigencia (YYYY-MM-DD, debe ser posterior a valid_from)</li>
+                <li><code>status</code> - Estado de la calificación</li>
+                <li><code>risk_level</code> - Nivel de riesgo</li>
+                <li><code>comments</code> - Comentarios o notas</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3>Valores Válidos</h3>
+          <ul className="instructions-list">
+            <li><strong>Rating:</strong> AAA, AA, A, BBB, BB, B, CCC, CC, C, D</li>
+            <li><strong>Status:</strong> VIGENTE, VENCIDO, SUSPENDIDO, CANCELADO</li>
+            <li><strong>Risk Level:</strong> MUY_BAJO, BAJO, MODERADO, ALTO, MUY_ALTO</li>
+          </ul>
+
+          <h3>Flujo de Procesamiento</h3>
+          <ol className="instructions-list">
+            <li>Carga el archivo usando el área de arrastre o selecciona con el botón</li>
+            <li>El archivo se registra en estado <strong>PENDIENTE</strong></li>
+            <li>Presiona <strong>"Procesar Carga"</strong> para validar e insertar los registros</li>
+            <li>Se valida cada fila: emisor, instrumento, rating, fechas y valores</li>
+            <li>Filas válidas se insertan como registros; filas con errores se registran con su descripción de error</li>
+            <li>Puedes revisar los detalles de cada carga en la tabla de \"Cargas Recientes\"</li>
+          </ol>
+
+          <h3>Validaciones y Restricciones</h3>
+          <ul className="instructions-list">
+            <li>Emisor e instrumento deben existir en el sistema previamente</li>
+            <li>Campos requeridos no pueden estar vacíos</li>
+            <li>Las fechas deben ser válidas en formato YYYY-MM-DD</li>
+            <li>No puede haber duplicados de (issuer, instrument, valid_from) en la misma carga o en el sistema</li>
+            <li>Si valid_to está presente, debe ser posterior a valid_from</li>
+          </ul>
         </div>
       </div>
         </>
