@@ -13,12 +13,23 @@ const CalificacionesList = () => {
   const [calificaciones, setCalificaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({
+  
+  // Filtros temporales (en el formulario)
+  const [tempFilters, setTempFilters] = useState({
     search: '',
     status: '',
     fecha_desde: '',
     fecha_hasta: ''
   });
+  
+  // Filtros activos (aplicados a la búsqueda)
+  const [activeFilters, setActiveFilters] = useState({
+    search: '',
+    status: '',
+    fecha_desde: '',
+    fecha_hasta: ''
+  });
+  
   const [pagination, setPagination] = useState({
     page: 1,
     pageSize: 10,
@@ -28,43 +39,54 @@ const CalificacionesList = () => {
   const fetchCalificaciones = useCallback(async () => {
     try {
       setLoading(true);
-      const { fecha_desde, fecha_hasta, ...rest } = filters;
-      let response;
+      const params = {
+        page: pagination.page,
+        page_size: pagination.pageSize,
+      };
 
-      // Si hay filtros de fechas, usar el endpoint específico
-      if (fecha_desde || fecha_hasta) {
-        response = await ratingsService.porRangoFecha(fecha_desde, fecha_hasta);
-        setCalificaciones(response.data);
-        setPagination(prev => ({ ...prev, total: response.data.length }));
-      } else {
-        const params = {
-          page: pagination.page,
-          page_size: pagination.pageSize,
-          ...rest,
-        };
-        response = await ratingsService.list(params);
-        setCalificaciones(response.data.results || response.data);
-        setPagination(prev => ({
-          ...prev,
-          total: response.data.count || response.data.length
-        }));
-      }
+      // Agregar filtros activos al params si existen
+      if (activeFilters.search) params.search = activeFilters.search;
+      if (activeFilters.status) params.status = activeFilters.status;
+      if (activeFilters.fecha_desde) params.valid_from__gte = activeFilters.fecha_desde;
+      if (activeFilters.fecha_hasta) params.valid_from__lte = activeFilters.fecha_hasta;
+
+      const response = await ratingsService.list(params);
+      const data = response.data.results || response.data || [];
+      setCalificaciones(Array.isArray(data) ? data : []);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.count || (Array.isArray(data) ? data.length : 0)
+      }));
       setError(null);
     } catch (err) {
       console.error('Error fetching calificaciones:', err);
+      setCalificaciones([]);
       setError('Error al cargar las calificaciones');
     } finally {
       setLoading(false);
     }
-  }, [filters, pagination.page, pagination.pageSize]);
+  }, [activeFilters, pagination.page, pagination.pageSize]);
 
   useEffect(() => {
     fetchCalificaciones();
   }, [fetchCalificaciones]);
 
+  // Cambiar valores en formulario (no dispara búsqueda)
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setTempFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Aplicar filtros (dispara búsqueda)
+  const handleApplyFilters = () => {
+    setActiveFilters(tempFilters);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  // Limpiar filtros
+  const handleClearFilters = () => {
+    setTempFilters({ search: '', status: '', fecha_desde: '', fecha_hasta: '' });
+    setActiveFilters({ search: '', status: '', fecha_desde: '', fecha_hasta: '' });
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
@@ -113,62 +135,80 @@ const CalificacionesList = () => {
 
       {/* Filtros */}
       <div className="filters-section">
-        <div className="filter-group">
-          <input
-            type="text"
-            name="search"
-            placeholder="Buscar por issuer o instrumento..."
-            value={filters.search}
-            onChange={handleFilterChange}
-            className="filter-input"
-          />
+        <div className="filters-row">
+          <div className="filter-group">
+            <label htmlFor="search">Buscar por issuer o instrumento:</label>
+            <input
+              id="search"
+              type="text"
+              name="search"
+              placeholder="Escribe para buscar..."
+              value={tempFilters.search}
+              onChange={handleFilterChange}
+              className="filter-input"
+            />
+          </div>
+          
+          <div className="filter-group">
+            <label htmlFor="status">Estado:</label>
+            <select
+              id="status"
+              name="status"
+              value={tempFilters.status}
+              onChange={handleFilterChange}
+              className="filter-select"
+            >
+              <option value="">Todos los estados</option>
+              {Object.entries(RATING_STATUS_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        
-        <div className="filter-group">
-          <select
-            name="status"
-            value={filters.status}
-            onChange={handleFilterChange}
-            className="filter-select"
+
+        <div className="filters-row">
+          <div className="filter-group">
+            <label htmlFor="fecha_desde">Válido desde:</label>
+            <input
+              id="fecha_desde"
+              type="date"
+              name="fecha_desde"
+              value={tempFilters.fecha_desde}
+              onChange={handleFilterChange}
+              className="filter-input"
+            />
+          </div>
+
+          <div className="filter-group">
+            <label htmlFor="fecha_hasta">Válido hasta:</label>
+            <input
+              id="fecha_hasta"
+              type="date"
+              name="fecha_hasta"
+              value={tempFilters.fecha_hasta}
+              onChange={handleFilterChange}
+              className="filter-input"
+            />
+          </div>
+        </div>
+
+        <div className="filters-actions">
+          <button 
+            className="btn-primary"
+            onClick={handleApplyFilters}
+            disabled={loading}
           >
-            <option value="">Todos los estados</option>
-            {Object.entries(RATING_STATUS_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
-          </select>
+            🔍 Buscar
+          </button>
+          
+          <button 
+            className="btn-secondary"
+            onClick={handleClearFilters}
+            disabled={loading}
+          >
+            🗑️ Limpiar
+          </button>
         </div>
-
-        <div className="filter-group">
-          <input
-            type="date"
-            name="fecha_desde"
-            value={filters.fecha_desde}
-            onChange={handleFilterChange}
-            className="filter-input"
-            placeholder="Desde"
-          />
-        </div>
-
-        <div className="filter-group">
-          <input
-            type="date"
-            name="fecha_hasta"
-            value={filters.fecha_hasta}
-            onChange={handleFilterChange}
-            className="filter-input"
-            placeholder="Hasta"
-          />
-        </div>
-
-        <button 
-          className="btn-secondary"
-          onClick={() => {
-            setFilters({ search: '', status: '', fecha_desde: '', fecha_hasta: '' });
-            setPagination(prev => ({ ...prev, page: 1 }));
-          }}
-        >
-          Limpiar
-        </button>
       </div>
 
       {error && <div className="error-message">{error}</div>}
