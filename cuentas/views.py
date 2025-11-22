@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status, permissions, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
+from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.contenttypes.models import ContentType
 from .models import Usuario
@@ -313,7 +314,8 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = AuditLogPagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['accion', 'modelo', 'usuario']
     search_fields = ['usuario__username', 'modelo', 'accion', 'descripcion']
     ordering_fields = ['creado_en', 'accion', 'modelo']
     ordering = ['-creado_en']
