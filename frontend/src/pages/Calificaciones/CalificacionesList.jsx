@@ -53,10 +53,10 @@ const CalificacionesList = () => {
         params.status = activeFilters.status.trim();
       }
       if (activeFilters.fecha_desde && activeFilters.fecha_desde.trim()) {
-        params.valid_from__gte = activeFilters.fecha_desde.trim();
+        params.valid_from_range_after = activeFilters.fecha_desde.trim();
       }
       if (activeFilters.fecha_hasta && activeFilters.fecha_hasta.trim()) {
-        params.valid_from__lte = activeFilters.fecha_hasta.trim();
+        params.valid_from_range_before = activeFilters.fecha_hasta.trim();
       }
 
       console.log('Filtros aplicados:', { activeFilters, params });
