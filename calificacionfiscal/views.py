@@ -8,7 +8,8 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FormParser
 from django_filters.rest_framework import DjangoFilterBackend
-from django_filters import FilterSet, DateFromToRangeFilter
+from django_filters import FilterSet, DateFromToRangeFilter, CharFilter
+from django.db.models import Q
 from cuentas.authentication import CsrfExemptSessionAuthentication
 from .models import CalificacionTributaria, TaxRating, BulkUpload, BulkUploadItem
 from .serializers import (
@@ -30,8 +31,23 @@ class TaxRatingPagination(PageNumberPagination):
 
 
 class TaxRatingFilterSet(FilterSet):
-    """FilterSet personalizado para TaxRating con filtros por rango de fechas."""
+    """FilterSet personalizado para TaxRating con filtros case-insensitive."""
+    # Filtros case-insensitive
+    status = CharFilter(field_name='status', method='filter_status_icase')
+    rating = CharFilter(field_name='rating', method='filter_rating_icase')
     valid_from_range = DateFromToRangeFilter(field_name='valid_from')
+    
+    def filter_status_icase(self, queryset, name, value):
+        """Filtro case-insensitive para status."""
+        if value:
+            return queryset.filter(status__iexact=value)
+        return queryset
+    
+    def filter_rating_icase(self, queryset, name, value):
+        """Filtro case-insensitive para rating."""
+        if value:
+            return queryset.filter(rating__iexact=value)
+        return queryset
     
     class Meta:
         model = TaxRating
@@ -467,7 +483,7 @@ class ReportsViewSet(viewsets.ViewSet):
         if instrument_id:
             queryset = queryset.filter(instrument_id=instrument_id)
         if status_filter:
-            queryset = queryset.filter(status=status_filter)
+            queryset = queryset.filter(status__iexact=status_filter.strip())
         
         estadisticas = obtener_estadisticas(queryset)
         return Response(estadisticas)

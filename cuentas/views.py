@@ -4,6 +4,7 @@ from rest_framework import status, permissions, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import FilterSet, CharFilter
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.contenttypes.models import ContentType
 from .models import Usuario
@@ -303,6 +304,35 @@ class AuditLogPagination(PageNumberPagination):
     max_page_size = 100
 
 
+class AuditLogFilterSet(FilterSet):
+    """FilterSet personalizado para AuditLog con filtros case-insensitive."""
+    accion = CharFilter(field_name='accion', method='filter_accion_icase')
+    modelo = CharFilter(field_name='modelo', method='filter_modelo_icase')
+    usuario = CharFilter(field_name='usuario__username', method='filter_usuario_icase')
+    
+    def filter_accion_icase(self, queryset, name, value):
+        """Filtro case-insensitive para acción."""
+        if value:
+            return queryset.filter(accion__iexact=value)
+        return queryset
+    
+    def filter_modelo_icase(self, queryset, name, value):
+        """Filtro case-insensitive para modelo."""
+        if value:
+            return queryset.filter(modelo__iexact=value)
+        return queryset
+    
+    def filter_usuario_icase(self, queryset, name, value):
+        """Filtro case-insensitive para usuario."""
+        if value:
+            return queryset.filter(usuario__username__iexact=value)
+        return queryset
+    
+    class Meta:
+        model = AuditLog
+        fields = ['accion', 'modelo', 'usuario']
+
+
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet para consultar logs de auditoría.
@@ -315,7 +345,7 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = AuditLogPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['accion', 'modelo', 'usuario']
+    filterset_class = AuditLogFilterSet
     search_fields = ['usuario__username', 'modelo', 'accion', 'descripcion']
     ordering_fields = ['creado_en', 'accion', 'modelo']
     ordering = ['-creado_en']
