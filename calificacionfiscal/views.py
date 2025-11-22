@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FormParser
+from django_filters.rest_framework import DjangoFilterBackend
 from cuentas.authentication import CsrfExemptSessionAuthentication
 from .models import CalificacionTributaria, TaxRating, BulkUpload, BulkUploadItem
 from .serializers import (
@@ -39,7 +40,8 @@ class TaxRatingViewSet(viewsets.ModelViewSet):
     queryset = TaxRating.objects.select_related('issuer', 'instrument', 'analista').all()
     authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [permissions.IsAuthenticated, TaxRatingPermission]
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'rating', 'valid_from', 'valid_to']
     search_fields = ['issuer__nombre', 'issuer__rut', 'instrument__nombre', 'instrument__codigo', 'rating', 'status']
     ordering_fields = ['valid_from', 'creado_en', 'issuer__nombre', 'rating']
     ordering = ['-valid_from']
