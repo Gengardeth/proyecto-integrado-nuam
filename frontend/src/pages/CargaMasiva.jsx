@@ -201,7 +201,7 @@ const CargaMasiva = () => {
 
       {!isAdmin && (
         <div className="info-message" style={{ padding: '20px', backgroundColor: '#e3f2fd', border: '1px solid #2196F3', borderRadius: '4px', marginBottom: '20px' }}>
-          <p>ℹ️ Solo los administradores pueden subir archivos. Aquí puedes ver el historial de cargas.</p>
+          <p>ℹ️ Como analista, puedes ver el historial de cargas masivas realizadas por los administradores. Los detalles de cada carga se encuentran en la sección de Cargas Recientes.</p>
         </div>
       )}
 
@@ -437,7 +437,7 @@ const CargaMasiva = () => {
         )}
       </div>
 
-      {/* Instructions Section */}
+      {isAdmin && (
       <div className="instructions-card">
         <h2>📋 Instrucciones de Carga Masiva</h2>
         <div className="instructions-content">
@@ -496,6 +496,7 @@ const CargaMasiva = () => {
           </ul>
         </div>
       </div>
+      )}
 
       {/* Footer */}
       <footer className="carga-footer">
