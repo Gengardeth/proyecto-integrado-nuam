@@ -35,7 +35,10 @@ class TaxRatingFilterSet(FilterSet):
     
     class Meta:
         model = TaxRating
-        fields = ['status', 'rating', 'valid_from_range']class TaxRatingViewSet(viewsets.ModelViewSet):
+        fields = ['status', 'rating', 'valid_from_range']
+
+
+class TaxRatingViewSet(viewsets.ModelViewSet):
     """
     ViewSet para TaxRating (Calificaciones Tributarias).
     
