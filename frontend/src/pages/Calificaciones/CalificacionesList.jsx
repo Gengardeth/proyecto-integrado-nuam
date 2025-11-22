@@ -45,11 +45,21 @@ const CalificacionesList = () => {
       };
 
       // Agregar filtros activos al params si existen
-      if (activeFilters.search) params.search = activeFilters.search;
-      if (activeFilters.status) params.status = activeFilters.status;
-      if (activeFilters.fecha_desde) params.valid_from__gte = activeFilters.fecha_desde;
-      if (activeFilters.fecha_hasta) params.valid_from__lte = activeFilters.fecha_hasta;
+      if (activeFilters.search && activeFilters.search.trim()) {
+        params.search = activeFilters.search.trim();
+      }
+      if (activeFilters.status && activeFilters.status.trim()) {
+        params.status = activeFilters.status.trim();
+      }
+      if (activeFilters.fecha_desde && activeFilters.fecha_desde.trim()) {
+        params.valid_from__gte = activeFilters.fecha_desde.trim();
+      }
+      if (activeFilters.fecha_hasta && activeFilters.fecha_hasta.trim()) {
+        params.valid_from__lte = activeFilters.fecha_hasta.trim();
+      }
 
+      console.log('Filtros aplicados:', { activeFilters, params });
+      
       const response = await ratingsService.list(params);
       const data = response.data.results || response.data || [];
       setCalificaciones(Array.isArray(data) ? data : []);
@@ -79,7 +89,14 @@ const CalificacionesList = () => {
 
   // Aplicar filtros (dispara búsqueda)
   const handleApplyFilters = () => {
-    setActiveFilters(tempFilters);
+    // Copiar tempFilters a activeFilters
+    setActiveFilters({
+      search: tempFilters.search,
+      status: tempFilters.status,
+      fecha_desde: tempFilters.fecha_desde,
+      fecha_hasta: tempFilters.fecha_hasta
+    });
+    // Resetear a página 1
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
