@@ -30,11 +30,13 @@ const CargaMasiva = () => {
   const fetchUploads = useCallback(async (page = 1) => {
     try {
       setLoadingUploads(true);
-      const resp = await bulkUploadsService.list({ page_size: 10, page });
+      // Asegurar que page es un número
+      const pageNum = parseInt(page, 10) || 1;
+      const resp = await bulkUploadsService.list({ page_size: 10, page: pageNum });
       const data = resp.data;
       setUploads(data.results || data);
       setUploadsTotal(data.count || data.length);
-      setUploadsPage(page);
+      setUploadsPage(pageNum);
     } catch (e) {
       console.error('Error listando cargas:', e);
     } finally {
@@ -54,7 +56,8 @@ const CargaMasiva = () => {
   useEffect(() => {
     fetchUploads(1);
     fetchEstadisticas();
-  }, [fetchUploads, fetchEstadisticas]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDrag = (e) => {
     e.preventDefault();
