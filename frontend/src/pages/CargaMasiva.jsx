@@ -17,6 +17,9 @@ const CargaMasiva = () => {
     const [_uploads, setUploads] = useState([]);
     const [_loadingUploads, setLoadingUploads] = useState(false);
     const [_selectedUpload, setSelectedUpload] = useState(null);
+    const [_uploadsPage, setUploadsPage] = useState(1);
+    const [_uploadsTotal, setUploadsTotal] = useState(0);
+    const [_uploadsPageSize] = useState(10);
   const [_items, setItems] = useState([]);
   const [_loadingItems, setLoadingItems] = useState(false);
   const [_itemsPage, setItemsPage] = useState(1); // eslint-disable-line no-unused-vars
@@ -24,11 +27,14 @@ const CargaMasiva = () => {
   // Estadísticas reservadas para futuras mejoras de feedback post-procesamiento
   const [estadisticas, setEstadisticas] = useState(null); // eslint-disable-line no-unused-vars
 
-  const fetchUploads = useCallback(async () => {
+  const fetchUploads = useCallback(async (page = 1) => {
     try {
       setLoadingUploads(true);
-      const resp = await bulkUploadsService.list({ page_size: 10 });
-      setUploads(resp.data.results || resp.data);
+      const resp = await bulkUploadsService.list({ page_size: 10, page });
+      const data = resp.data;
+      setUploads(data.results || data);
+      setUploadsTotal(data.count || data.length);
+      setUploadsPage(page);
     } catch (e) {
       console.error('Error listando cargas:', e);
     } finally {
@@ -46,7 +52,7 @@ const CargaMasiva = () => {
   }, []);
 
   useEffect(() => {
-    fetchUploads();
+    fetchUploads(1);
     fetchEstadisticas();
   }, [fetchUploads, fetchEstadisticas]);
 
@@ -380,6 +386,31 @@ const CargaMasiva = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        
+        {_uploads.length > 0 && (
+          <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '20px', padding: '15px', borderTop: '1px solid #e2e8f0' }}>
+            <button 
+              onClick={() => fetchUploads(_uploadsPage - 1)} 
+              disabled={_uploadsPage <= 1 || _loadingUploads}
+              style={{ padding: '8px 16px', cursor: _uploadsPage <= 1 ? 'not-allowed' : 'pointer', opacity: _uploadsPage <= 1 ? 0.5 : 1 }}
+            >
+              ◀ Anterior
+            </button>
+            <span style={{ margin: '0 15px', fontWeight: 'bold', fontSize: '14px' }}>
+              Página {_uploadsPage} de {Math.ceil(_uploadsTotal / _uploadsPageSize)}
+            </span>
+            <button 
+              onClick={() => fetchUploads(_uploadsPage + 1)} 
+              disabled={_uploadsPage >= Math.ceil(_uploadsTotal / _uploadsPageSize) || _loadingUploads}
+              style={{ padding: '8px 16px', cursor: _uploadsPage >= Math.ceil(_uploadsTotal / _uploadsPageSize) ? 'not-allowed' : 'pointer', opacity: _uploadsPage >= Math.ceil(_uploadsTotal / _uploadsPageSize) ? 0.5 : 1 }}
+            >
+              Siguiente ▶
+            </button>
+            <span style={{ marginLeft: '15px', fontSize: '12px', color: '#666' }}>
+              Total: {_uploadsTotal} cargas
+            </span>
           </div>
         )}
         {_selectedUpload && (
