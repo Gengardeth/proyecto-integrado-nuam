@@ -56,8 +56,7 @@ const CargaMasiva = () => {
   useEffect(() => {
     fetchUploads(1);
     fetchEstadisticas();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchUploads, fetchEstadisticas]);
 
   const handleDrag = (e) => {
     e.preventDefault();
